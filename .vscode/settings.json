@@ -1,0 +1,8 @@
+{
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "markw65.prettier-extension-monkeyc",
+    "[monkeyc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}

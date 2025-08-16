@@ -1,4 +1,7 @@
 <menu id="MainMenu" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-    <menu-item id="item_1" label="@Strings.menu_label_1" />
-    <menu-item id="item_2" label="@Strings.menu_label_2" />
+    <!-- When paused: item_1=Resume, item_2=Save, item_3=Discard -->
+    <!-- When idle: item_1=Start, item_2=Close -->
+    <menu-item id="item_1" label="@Strings.menu_label_resume" />
+    <menu-item id="item_2" label="@Strings.menu_label_save" />
+    <menu-item id="item_3" label="@Strings.menu_label_discard" />
 </menu>

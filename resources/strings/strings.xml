@@ -2,10 +2,16 @@
     <string id="AppName">NutritionLogger</string>
 
     <string id="prompt">Click the menu button</string>
+    <!-- Menu labels -->
+    <string id="menu_label_resume">Resume</string>
+    <string id="menu_label_save">Save</string>
+    <string id="menu_label_discard">Discard</string>
+    <string id="menu_label_close">Close</string>
 
-    <string id="menu_label_1">Save</string>
-    <string id="menu_label_2">Discard</string>
+    <!-- Counter labels -->
+    <string id="counter_water">Water</string>
+    <string id="counter_electrolytes">Electrolytes</string>
+    <string id="counter_food">Food</string>
     <string id="status_recording">Recording</string>
     <string id="status_idle">Idle</string>
-    <string id="hint_controls">Start/Stop: Start key, Lap: Up, Menu: Down</string>
 </strings>
