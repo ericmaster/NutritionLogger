@@ -2,6 +2,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 using Toybox.ActivityRecording as AR;
+using Toybox.System as Sys;
 
 class NutritionLoggerMenuDelegate extends WatchUi.MenuInputDelegate {
   var mPostStop as Boolean;
@@ -13,13 +14,14 @@ class NutritionLoggerMenuDelegate extends WatchUi.MenuInputDelegate {
 
   function onMenuItem(item as Symbol) as Void {
     var app = getApp();
+    Sys.println("mPostStop: " + mPostStop);
     if (mPostStop) {
       if (item == :item_1) {
+        Sys.println("Resume");
         // Resume
         if (app.mSession != null && !app.mSession.isRecording()) {
           app.mSession.start();
         }
-        WatchUi.popView(WatchUi.SLIDE_DOWN);
         WatchUi.requestUpdate();
       } else if (item == :item_2) {
         // Save
@@ -28,7 +30,6 @@ class NutritionLoggerMenuDelegate extends WatchUi.MenuInputDelegate {
           System.println("Save: " + ok);
           app.mSession = null;
         }
-        WatchUi.popView(WatchUi.SLIDE_DOWN);
         System.exit();
       } else if (item == :item_3) {
         // Discard
@@ -37,10 +38,10 @@ class NutritionLoggerMenuDelegate extends WatchUi.MenuInputDelegate {
           System.println("Discard: " + ok2);
           app.mSession = null;
         }
-        WatchUi.popView(WatchUi.SLIDE_DOWN);
         System.exit();
       }
     } else {
+      Sys.println("Else");
       // Idle menu: Close app
       if (item == :item_2 || item == :item_3) {
         System.println("Closing app");

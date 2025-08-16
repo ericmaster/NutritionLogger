@@ -52,7 +52,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
         }
         WatchUi.requestUpdate();
       } else if (session.isRecording()) {
-        Sys.println("Stopping");
+        Sys.println("Pausing");
         // Pause
         session.stop();
         // Show paused menu with Resume/Save/Discard
