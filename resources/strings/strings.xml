@@ -1,0 +1,11 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">NutritionLogger</string>
+
+    <string id="prompt">Click the menu button</string>
+
+    <string id="menu_label_1">Save</string>
+    <string id="menu_label_2">Discard</string>
+    <string id="status_recording">Recording</string>
+    <string id="status_idle">Idle</string>
+    <string id="hint_controls">Start/Stop: Start key, Lap: Up, Menu: Down</string>
+</strings>
