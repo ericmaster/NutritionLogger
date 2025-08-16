@@ -43,13 +43,15 @@ class NutritionLoggerView extends WatchUi.View {
     var y = 10;
     var isRec = app.mSession != null && app.mSession.isRecording();
     if (isRec) {
+      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
       mUpdateTimer.start(method(:tick), 1000, true);
     } else {
+      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
       mUpdateTimer.stop();
     }
     Sys.println(isRec ? "Recording" : "Idle");
     var status = isRec ? Rez.Strings.status_recording : Rez.Strings.status_idle;
-    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+    
     dc.drawText(
       dc.getWidth() / 2,
       y,
@@ -57,8 +59,9 @@ class NutritionLoggerView extends WatchUi.View {
       WatchUi.loadResource(status),
       Graphics.TEXT_JUSTIFY_CENTER
     );
-    y += 30;
+    y += 25;
 
+    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
     var info = Activity.getActivityInfo();
     // Sys.println("Serialized info: " +
     //     "\n\tAltitude: " + info.altitude +
@@ -71,9 +74,9 @@ class NutritionLoggerView extends WatchUi.View {
     var et = info.elapsedTime; // ms
     var timeMs = info.timerState == Activity.TIMER_STATE_STOPPED ? et : tt;
     var secs = timeMs == null ? 0 : (timeMs / 1000).toNumber();
-    var h = (secs / 3600).toNumber();
-    var m = ((secs % 3600) / 60).toNumber();
-    var s = (secs % 60).toNumber();
+    var h = (secs / 3600).format("%02d");
+    var m = ((secs % 3600) / 60).format("%02d");
+    var s = (secs % 60).format("%02d");
     var timeStr = Lang.format("$1$:$2$:$3$", [h, m, s]);
     dc.drawText(
       dc.getWidth() / 2,
@@ -82,7 +85,7 @@ class NutritionLoggerView extends WatchUi.View {
       timeStr,
       Graphics.TEXT_JUSTIFY_CENTER
     );
-    y += 40;
+    y += 35;
     // Display distance
     var distStr = "0 m";
     if (dist != null) {
@@ -119,7 +122,7 @@ class NutritionLoggerView extends WatchUi.View {
       hrStr,
       Graphics.TEXT_JUSTIFY_CENTER
     );
-    y += 30;
+    y += 40;
 
     // Custom counters section
     var labels = [
@@ -142,7 +145,7 @@ class NutritionLoggerView extends WatchUi.View {
         line,
         Graphics.TEXT_JUSTIFY_CENTER
       );
-      y += 22;
+      y += 25;
       i += 1;
     }
   }
