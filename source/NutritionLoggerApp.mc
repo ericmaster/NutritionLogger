@@ -1,6 +1,9 @@
 import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
+import Toybox.Position;
+import Toybox.Sensor;
+using Toybox.SensorLogging;
 using Toybox.System as Sys;
 using Toybox.Activity as Activity;
 using Toybox.ActivityRecording as AR;
@@ -19,12 +22,33 @@ class NutritionLoggerApp extends Application.AppBase {
   var mSelectedIndex as Number = 0; // 0..2
   var mEventStack as Array<Number> = []; // stack of indices for undo
 
+  var logger;
+
   function initialize() {
     AppBase.initialize();
   }
 
   // onStart() is called on application start up
-  function onStart(state as Dictionary?) as Void {}
+  function onStart(state as Dictionary?) as Void {
+    logger = new SensorLogging.SensorLogger({
+      :accelerometer => { :enabled => true },
+      :gyroscope => { :enabled => true },
+    });
+
+    Sensor.setEnabledSensors([
+      Sensor.SENSOR_HEARTRATE,
+      Sensor.SENSOR_PULSE_OXIMETRY,
+      Sensor.SENSOR_TEMPERATURE,
+    ]);
+    Sensor.enableSensorEvents(method(:onSensor));
+
+    // Sensor.registerSensorDataListener(method(""))
+
+    Position.enableLocationEvents(
+      Position.LOCATION_CONTINUOUS,
+      method(:onPosition)
+    );
+  }
 
   // onStop() is called when your application is exiting
   function onStop(state as Dictionary?) as Void {
@@ -32,6 +56,7 @@ class NutritionLoggerApp extends Application.AppBase {
     if (mSession != null && mSession.isRecording()) {
       mSession.stop();
       // Don't auto-save; let user decide next launch
+      Position.enableLocationEvents(Position.LOCATION_DISABLE, null);
     }
   }
 
@@ -88,6 +113,14 @@ class NutritionLoggerApp extends Application.AppBase {
     } else if (idx == 2 && mFoodField != null) {
       mFoodField.setData(value);
     }
+  }
+
+  function onPosition(info as Position.Info) as Void {
+    // System.println("Position: " + info.latitude + ", " + info.longitude);
+  }
+
+  function onSensor(sensorInfo as Sensor.Info) as Void {
+    System.println("Heart Rate: " + sensorInfo.heartRate);
   }
 }
 

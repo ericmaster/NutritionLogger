@@ -42,6 +42,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
             :name => "Trail Run",
             :sport => Activity.SPORT_RUNNING,
             :subSport => Activity.SUB_SPORT_TRAIL,
+            :sensorLogger => app.logger
           });
           app.resetCounters();
           app.initFitFields();
@@ -79,16 +80,6 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       app.mSelectedIndex = (app.mSelectedIndex + 1) % 3;
       WatchUi.requestUpdate();
       return true;
-      // } else if (key == WatchUi.KEY_LIGHT || key == WatchUi.KEY_POWER) {
-      //   // Record intake only while recording
-      //   if (session != null && session.isRecording()) {
-      //     var idx = app.mSelectedIndex;
-      //     app.mCounters[idx] = app.mCounters[idx] + 1.0;
-      //     app.mEventStack.add(idx);
-      //     app.setFieldByIndex(idx, app.mCounters[idx]);
-      //     WatchUi.requestUpdate();
-      //     return true;
-      //   }
     }
     // While recording, consume any other key (e.g., Back/Lap) so the app doesn't exit.
     // The short/long behavior is handled in onKeyReleased where we can measure hold time.
@@ -100,25 +91,12 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
 
   // Some devices deliver Light as KEY_POWER or only via key pressed events; also track key-down for Back timing
   function onKeyPressed(keyEvent as KeyEvent) as Boolean {
-    var app = getApp();
-    var session = app.mSession;
     var key = keyEvent.getKey();
     var type = keyEvent.getType();
     Sys.println("onKeyPressed key=" + key + " type=" + type);
     if (type == WatchUi.PRESS_TYPE_DOWN) {
       mLastKeyDownAt = Sys.getTimer();
       mLastKeyCode = key;
-    }
-    if (session != null && session.isRecording()) {
-      // Does not seem to be working in current API
-      //   if (key == WatchUi.KEY_LIGHT || key == WatchUi.KEY_POWER) {
-      //     var idx = app.mSelectedIndex;
-      //     app.mCounters[idx] = app.mCounters[idx] + 1.0;
-      //     app.mEventStack.add(idx);
-      //     app.setFieldByIndex(idx, app.mCounters[idx]);
-      //     WatchUi.requestUpdate();
-      //     return true;
-      //   }
     }
     return false;
   }
