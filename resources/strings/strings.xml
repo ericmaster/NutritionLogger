@@ -8,6 +8,9 @@
     <string id="menu_label_discard">Discard</string>
     <string id="menu_label_close">Close</string>
 
+    <!-- Level labels -->
+    <string id="rpe">RPE</string>
+
     <!-- Counter labels -->
     <string id="counter_water">Water</string>
     <string id="counter_electrolytes">Electrolytes</string>

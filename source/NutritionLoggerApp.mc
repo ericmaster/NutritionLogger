@@ -10,17 +10,24 @@ using Toybox.ActivityRecording as AR;
 using Toybox.FitContributor as Fit;
 
 class NutritionLoggerApp extends Application.AppBase {
+  // Developer Fields Constants
+  const RPE_FIELD = 0;
+  const WATER_FIELD = 1;
+  const ELECTROLYTES_FIELD = 2;
+  const FOOD_FIELD = 3;
+
   // Global session reference
   var mSession as AR.Session?;
   // Developer data fields
+  var mRPEField as Fit.Field?;
   var mWaterField as Fit.Field?;
   var mElectrolytesField as Fit.Field?;
   var mFoodField as Fit.Field?;
 
   // Counters and selection
-  var mCounters as Array<Float> = [0.0, 0.0, 0.0]; // [water, electrolytes, food]
-  var mSelectedIndex as Number = 0; // 0..2
-  var mEventStack as Array<Number> = []; // stack of indices for undo
+  var mRPE as Number = 0;
+  var mCounters as Array<Number> = [0, 0, 0]; // [water, electrolytes, food]
+  var mSelectedIndex as Number = -1; // -1..3
 
   var logger;
 
@@ -67,9 +74,9 @@ class NutritionLoggerApp extends Application.AppBase {
 
   // Helpers
   function resetCounters() as Void {
-    mCounters = [0.0, 0.0, 0.0];
-    mSelectedIndex = 0;
-    mEventStack = [];
+    mRPE = 0;
+    mCounters = [0, 0, 0];
+    mSelectedIndex = -1; // No variable selected yet
   }
 
   function initFitFields() as Void {
@@ -78,10 +85,16 @@ class NutritionLoggerApp extends Application.AppBase {
     }
     try {
       // Create developer fields written on record messages
+      mRPEField = mSession.createField(
+        "rate_of_perceived_exertion",
+        0,
+        Fit.DATA_TYPE_UINT8,
+        { :mesgType => Fit.MESG_TYPE_RECORD, :units => "level" }
+      );
       mWaterField = mSession.createField(
         "water_intake_count",
         1,
-        Fit.DATA_TYPE_FLOAT,
+        Fit.DATA_TYPE_UINT8,
         { :mesgType => Fit.MESG_TYPE_RECORD, :units => "count" }
       );
       mElectrolytesField = mSession.createField(
@@ -97,20 +110,22 @@ class NutritionLoggerApp extends Application.AppBase {
         { :mesgType => Fit.MESG_TYPE_RECORD, :units => "count" }
       );
       // Initialize to zero
-      mWaterField.setData(0.0);
-      mElectrolytesField.setData(0.0);
-      mFoodField.setData(0.0);
+      mWaterField.setData(0);
+      mElectrolytesField.setData(0);
+      mFoodField.setData(0);
     } catch (e) {
       Sys.println("Failed to init Fit fields: " + e);
     }
   }
 
-  function setFieldByIndex(idx as Number, value as Float) as Void {
-    if (idx == 0 && mWaterField != null) {
+  function setFieldByIndex(idx as Number, value as Number) as Void {
+    if (idx == 0 && mRPEField != null) {
+      mRPEField.setData(value);
+    } else if (idx == 1 && mWaterField != null) {
       mWaterField.setData(value);
-    } else if (idx == 1 && mElectrolytesField != null) {
+    } else if (idx == 2 && mElectrolytesField != null) {
       mElectrolytesField.setData(value);
-    } else if (idx == 2 && mFoodField != null) {
+    } else if (idx == 3 && mFoodField != null) {
       mFoodField.setData(value);
     }
   }

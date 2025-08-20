@@ -24,143 +24,98 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     var app = getApp();
     var session = app.mSession;
     var key = keyEvent.getKey();
-
-    // Button mapping:
-    // - Start/Stop (ENTER): Start/Pause/Resume activity
-    // - Up/Menu: Cycle up selected counter
-    // - Down: Cycle down selected counter
-    // - Light: Record intake on selected counter
-    // - Back/Lap: Undo last intake
     Sys.println("Key pressed: " + key);
-    var isStartKey = key == WatchUi.KEY_ENTER;
-    if (isStartKey) {
-      if (session == null) {
-        Sys.println("Starting new session");
-        // Create and start a new session for Trail Running
-        try {
-          app.mSession = AR.createSession({
-            :name => "Trail Run",
-            :sport => Activity.SPORT_RUNNING,
-            :subSport => Activity.SUB_SPORT_TRAIL,
-            :sensorLogger => app.logger
-          });
-          app.resetCounters();
-          app.initFitFields();
-          app.mSession.setTimerEventListener(method(:onTimerEvent));
-          app.mSession.start();
-        } catch (e) {
-          Sys.println("Failed to start session: " + e);
-        }
-        WatchUi.requestUpdate();
-      } else if (session.isRecording()) {
-        Sys.println("Pausing");
-        // Pause
-        session.stop();
-        // Show paused menu with Resume/Save/Discard
-        WatchUi.pushView(
-          new Rez.Menus.MainMenu(),
-          new NutritionLoggerMenuDelegate(true),
-          WatchUi.SLIDE_UP
-        );
-        WatchUi.requestUpdate();
-      } else {
-        Sys.println("Resuming");
-        // Resume
-        session.start();
-        WatchUi.requestUpdate();
-      }
-      return true;
-    } else if (key == WatchUi.KEY_UP || key == WatchUi.KEY_MENU) {
-      // Cycle up selected counter (wrap 0..2)
-      app.mSelectedIndex = (app.mSelectedIndex + 2) % 3; // up = previous
+
+    if (key == WatchUi.KEY_ENTER) {
+      return onStartKey();
+    } else if (key == WatchUi.KEY_ESC) {
+      return onBackKey();
+    }
+
+    if (key == WatchUi.KEY_UP || key == WatchUi.KEY_MENU) {
+      app.mSelectedIndex = (app.mSelectedIndex + 5) % 5 - 1;
       WatchUi.requestUpdate();
       return true;
     } else if (key == WatchUi.KEY_DOWN) {
-      // Cycle down selected counter
-      app.mSelectedIndex = (app.mSelectedIndex + 1) % 3;
+      app.mSelectedIndex = (app.mSelectedIndex + 2) % 5 - 1;
       WatchUi.requestUpdate();
       return true;
     }
-    // While recording, consume any other key (e.g., Back/Lap) so the app doesn't exit.
-    // The short/long behavior is handled in onKeyReleased where we can measure hold time.
     if (session != null && session.isRecording()) {
       return true;
     }
     return false;
   }
 
-  // Some devices deliver Light as KEY_POWER or only via key pressed events; also track key-down for Back timing
-  function onKeyPressed(keyEvent as KeyEvent) as Boolean {
-    var key = keyEvent.getKey();
-    var type = keyEvent.getType();
-    Sys.println("onKeyPressed key=" + key + " type=" + type);
-    if (type == WatchUi.PRESS_TYPE_DOWN) {
-      mLastKeyDownAt = Sys.getTimer();
-      mLastKeyCode = key;
-    }
-    return false;
-  }
-
-  // Use release to decide short vs long Back/Lap
-  function onKeyReleased(keyEvent as KeyEvent) as Boolean {
+  function onStartKey() as Boolean {
     var app = getApp();
     var session = app.mSession;
-    var key = keyEvent.getKey();
-    var type = keyEvent.getType();
-    Sys.println("onKeyReleased key=" + key + " type=" + type);
 
-    if (session == null || !session.isRecording()) {
-      return false;
+    // Only react to Start/Stop (ENTER) when app is not started
+    if (session == null) {
+      Sys.println("Starting new session");
+      try {
+        app.mSession = AR.createSession({
+          :name => "Trail Run",
+          :sport => Activity.SPORT_RUNNING,
+          :subSport => Activity.SUB_SPORT_TRAIL,
+          :sensorLogger => app.logger
+        });
+        app.resetCounters();
+        app.initFitFields();
+        app.mSession.setTimerEventListener(method(:onTimerEvent));
+        app.mSession.start();
+      } catch (e) {
+        Sys.println("Failed to start session: " + e);
+      }
+      WatchUi.requestUpdate();
+      return true;
     }
 
-    // Consider Back/Lap as the key that isn't one of our known handled ones
-    var isKnown =
-      key == WatchUi.KEY_ENTER ||
-      key == WatchUi.KEY_UP ||
-      key == WatchUi.KEY_DOWN ||
-      key == WatchUi.KEY_MENU ||
-      key == WatchUi.KEY_LIGHT ||
-      key == WatchUi.KEY_POWER;
-    if (!isKnown && mLastKeyCode != null && key == mLastKeyCode) {
-      var now = Sys.getTimer();
-      var downAt = mLastKeyDownAt == null ? now : mLastKeyDownAt;
-      var heldMs = now - downAt;
-      var LONG_MS = 600;
-
-      if (heldMs >= LONG_MS) {
-        // Long press = undo last intake
-        if (app.mEventStack.size() > 0) {
-          var i = app.mEventStack.size() - 1;
-          var lastIdx = app.mEventStack[i];
-          app.mEventStack = app.mEventStack.slice(0, i);
-          var newVal = app.mCounters[lastIdx] - 1.0;
-          if (newVal < 0.0) {
-            newVal = 0.0;
-          }
-          app.mCounters[lastIdx] = newVal;
-          app.setFieldByIndex(lastIdx, newVal);
-          WatchUi.requestUpdate();
-        }
-      } else {
-        // Short press = record intake
-        var idx = app.mSelectedIndex;
-        app.mCounters[idx] = app.mCounters[idx] + 1.0;
-        app.mEventStack.add(idx);
-        app.setFieldByIndex(idx, app.mCounters[idx]);
-        WatchUi.requestUpdate();
+    // App is started, handle counter increment
+    if (app.mSelectedIndex != null && app.mSelectedIndex != -1) {
+      var idx = app.mSelectedIndex;
+      if (idx == app.RPE_FIELD) {
+        // Cycle thorugh RPE (0 - 4)
+        app.mRPE = (app.mRPE + 1) % 5;
+        app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
+      }else {
+        // Increment selected counter
+        var counterIdx = idx - 1; // Counter index start at 0
+        app.mCounters[counterIdx] = app.mCounters[counterIdx] + 1;
+        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
       }
-
-      // Clear state
-      mLastKeyCode = null;
-      mLastKeyDownAt = null;
+      WatchUi.requestUpdate();
       return true;
     }
 
     return false;
   }
 
-  // Back/Lap handled in onKeyReleased; keep as no-op so system Back behavior works when idle
-  function onBack() as Boolean {
+  function onBackKey() as Boolean {
+    var app = getApp();
+    var session = app.mSession;
+
+    // Only handle back key when app is started and counter is selected
+    if (session != null && app.mSelectedIndex != null && app.mSelectedIndex != -1) {
+      // Decrement selected counter
+      var idx = app.mSelectedIndex;
+      if (idx == app.RPE_FIELD) {
+        // Cycle thorugh RPE (0 - 4)
+        app.mRPE = (app.mRPE + 4) % 5;
+        app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
+      }else {
+        var counterIdx = idx - 1; // Counter index start at 0
+        app.mCounters[counterIdx] = app.mCounters[counterIdx] - 1;
+        if (app.mCounters[counterIdx] < 0) {
+          app.mCounters[counterIdx] = 0;
+        }
+        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+      }
+      WatchUi.requestUpdate();
+      return true;
+    }
+
     return false;
   }
 

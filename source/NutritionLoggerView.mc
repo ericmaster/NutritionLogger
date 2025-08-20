@@ -4,6 +4,7 @@ using Toybox.System as Sys;
 using Toybox.Activity as Activity;
 using Toybox.Timer as Timer;
 using Toybox.Sensor as Sensor;
+using Toybox.Math;
 
 class NutritionLoggerView extends WatchUi.View {
   var mUpdateTimer as Timer.Timer?;
@@ -42,16 +43,77 @@ class NutritionLoggerView extends WatchUi.View {
     var app = getApp();
     var y = 10;
     var isRec = app.mSession != null && app.mSession.isRecording();
+    var drawSign = false;
+    Sys.println(isRec ? "Recording" : "Idle");
+
+    // HINTS RENDER
     if (isRec) {
-      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+      if (app.mSelectedIndex == -1) {
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+      } else {
+        drawSign = true;
+        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+      }
       mUpdateTimer.start(method(:tick), 1000, true);
     } else {
-      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+      dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
       mUpdateTimer.stop();
     }
-    Sys.println(isRec ? "Recording" : "Idle");
+
+    // Start button hint
+    var screenRadius = dc.getWidth() / 2;
+    var arcRadius = screenRadius - 8;
+    var arcStart = 22; // degrees
+    var arcEnd = 38; // degrees
+    dc.setPenWidth(5);
+    dc.drawArc(
+      screenRadius,
+      screenRadius,
+      arcRadius,
+      Graphics.ARC_COUNTER_CLOCKWISE,
+      arcStart,
+      arcEnd
+    );
+
+    // Back button hint
+    if (isRec) {
+      screenRadius = dc.getWidth() / 2;
+      arcRadius = screenRadius - 8;
+      arcStart = 322; // degrees
+      arcEnd = 338; // degrees
+      dc.setPenWidth(5);
+      dc.drawArc(
+        screenRadius,
+        screenRadius,
+        arcRadius,
+        Graphics.ARC_COUNTER_CLOCKWISE,
+        arcStart,
+        arcEnd
+      );
+    }
+
+    if (drawSign) {
+      dc.drawText(
+        arcRadius * (1.0 + Math.cos(Math.toRadians(28))),
+        arcRadius * (1.0 - Math.sin(Math.toRadians(28))),
+        Graphics.FONT_XTINY,
+        "+",
+        Graphics.TEXT_JUSTIFY_CENTER
+      );
+
+      dc.drawText(
+        arcRadius * (1.0 + Math.cos(Math.toRadians(28))),
+        arcRadius * (1.0 + Math.sin(Math.toRadians(28))),
+        Graphics.FONT_XTINY,
+        "-",
+        Graphics.TEXT_JUSTIFY_CENTER
+      );
+    }
+
     var status = isRec ? Rez.Strings.status_recording : Rez.Strings.status_idle;
-    
+    if (isRec) {
+      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+    }
     dc.drawText(
       dc.getWidth() / 2,
       y,
@@ -61,14 +123,8 @@ class NutritionLoggerView extends WatchUi.View {
     );
     y += 25;
 
-    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
     var info = Activity.getActivityInfo();
-    // Sys.println("Serialized info: " +
-    //     "\n\tAltitude: " + info.altitude +
-    //     "\n\tElapsedDistance: " + info.elapsedDistance
-    // );
-    Sys.println("Elapsed Time: " + info.elapsedTime);
-    // Sys.println("ElapsedDistance: " + info.elapsedDistance);
     var dist = info.elapsedDistance != null ? info.elapsedDistance : 0; // meters
     var tt = info.timerTime; // ms
     var et = info.elapsedTime; // ms
@@ -124,19 +180,34 @@ class NutritionLoggerView extends WatchUi.View {
     );
     y += 40;
 
-    // Custom counters section
+    // Custom variables section
     var labels = [
+      WatchUi.loadResource(Rez.Strings.rpe),
       WatchUi.loadResource(Rez.Strings.counter_water),
       WatchUi.loadResource(Rez.Strings.counter_electrolytes),
       WatchUi.loadResource(Rez.Strings.counter_food),
     ];
     var i = 0;
-    while (i < 3) {
+    while (i < 4) {
       var name = labels[i];
-      var val = app.mCounters[i];
-      var line = name + ": " + val.format("%.0f");
-      var color =
-        i == app.mSelectedIndex ? Graphics.COLOR_YELLOW : Graphics.COLOR_WHITE;
+      var val = i == app.RPE_FIELD ? app.mRPE : app.mCounters[i - 1]; // Counters index start at 0
+      var line = "";
+      if (i == app.RPE_FIELD) {
+        line =
+          name +
+          ": " +
+          (app.mRPE * 2 + 1).toString() +
+          "-" +
+          (app.mRPE * 2 + 2).toString();
+      } else {
+        line = name + ": " + val.format("%.0f");
+      }
+      // If not recording, display as disabled
+      var color = !isRec
+        ? Graphics.COLOR_LT_GRAY
+        : i == app.mSelectedIndex
+        ? Graphics.COLOR_YELLOW
+        : Graphics.COLOR_WHITE;
       dc.setColor(color, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
         dc.getWidth() / 2,
