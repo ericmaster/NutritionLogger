@@ -14,6 +14,22 @@ class NutritionLoggerView extends WatchUi.View {
     View.initialize();
   }
 
+  // Helper function to get color based on RPE value (0=cyan, 2=green, 4=red)
+  function getRPEColor(rpeValue) {
+    if (rpeValue <= 0) {
+      return 0x00FFFF; // Cyan
+    } else if (rpeValue == 1) {
+      return 0x00FF00; // Green
+    } else if (rpeValue == 2) {
+      return 0xFFFF00; // Yellow
+    } else if (rpeValue == 3) {
+      return 0xFFA500; // Orange
+    } else if (rpeValue >= 4) {
+      return 0xFF0000; // Red
+    }
+    return 0xFFFF00; // Return yellow by default
+  }
+
   // Load your resources here
   function onLayout(dc as Dc) as Void {
     setLayout(Rez.Layouts.MainLayout(dc));
@@ -52,7 +68,12 @@ class NutritionLoggerView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
       } else {
         drawSign = true;
-        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        if (app.mSelectedIndex == app.RPE_FIELD) {
+          dc.setColor(getRPEColor(app.mRPE), Graphics.COLOR_TRANSPARENT);
+        }
+        else {
+          dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        }
       }
       mUpdateTimer.start(method(:tick), 1000, true);
     } else {
@@ -62,10 +83,10 @@ class NutritionLoggerView extends WatchUi.View {
 
     // Start button hint
     var screenRadius = dc.getWidth() / 2;
-    var arcRadius = screenRadius - 8;
+    var arcRadius = screenRadius - 6;
     var arcStart = 22; // degrees
     var arcEnd = 38; // degrees
-    dc.setPenWidth(5);
+    dc.setPenWidth(2);
     dc.drawArc(
       screenRadius,
       screenRadius,
@@ -77,11 +98,8 @@ class NutritionLoggerView extends WatchUi.View {
 
     // Back button hint
     if (isRec) {
-      screenRadius = dc.getWidth() / 2;
-      arcRadius = screenRadius - 8;
       arcStart = 322; // degrees
       arcEnd = 338; // degrees
-      dc.setPenWidth(5);
       dc.drawArc(
         screenRadius,
         screenRadius,
@@ -93,20 +111,21 @@ class NutritionLoggerView extends WatchUi.View {
     }
 
     if (drawSign) {
+      var signRadius = screenRadius - 4;
       dc.drawText(
-        arcRadius * (1.0 + Math.cos(Math.toRadians(28))),
-        arcRadius * (1.0 - Math.sin(Math.toRadians(28))),
-        Graphics.FONT_XTINY,
+        signRadius * (1.0 + Math.cos(Math.toRadians(30))),
+        signRadius * (1.0 - Math.sin(Math.toRadians(30))) + 10,
+        Graphics.FONT_TINY,
         "+",
-        Graphics.TEXT_JUSTIFY_CENTER
+        Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
       );
 
       dc.drawText(
-        arcRadius * (1.0 + Math.cos(Math.toRadians(28))),
-        arcRadius * (1.0 + Math.sin(Math.toRadians(28))),
-        Graphics.FONT_XTINY,
+        signRadius * (1.0 + Math.cos(Math.toRadians(30))),
+        signRadius * (1.0 + Math.sin(Math.toRadians(30))) - 2,
+        Graphics.FONT_TINY,
         "-",
-        Graphics.TEXT_JUSTIFY_CENTER
+        Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
       );
     }
 
@@ -192,6 +211,7 @@ class NutritionLoggerView extends WatchUi.View {
       var name = labels[i];
       var val = i == app.RPE_FIELD ? app.mRPE : app.mCounters[i - 1]; // Counters index start at 0
       var line = "";
+      var color = Graphics.COLOR_LT_GRAY;
       if (i == app.RPE_FIELD) {
         line =
           name +
@@ -199,15 +219,21 @@ class NutritionLoggerView extends WatchUi.View {
           (app.mRPE * 2 + 1).toString() +
           "-" +
           (app.mRPE * 2 + 2).toString();
+        if (i == app.mSelectedIndex && isRec) {
+          color = getRPEColor(app.mRPE);
+        }
       } else {
         line = name + ": " + val.format("%.0f");
+        if (i == app.mSelectedIndex) {
+          if (isRec) {
+            color = Graphics.COLOR_YELLOW;
+          }
+          else {
+            color = Graphics.COLOR_WHITE;
+          }
+        }
       }
       // If not recording, display as disabled
-      var color = !isRec
-        ? Graphics.COLOR_LT_GRAY
-        : i == app.mSelectedIndex
-        ? Graphics.COLOR_YELLOW
-        : Graphics.COLOR_WHITE;
       dc.setColor(color, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
         dc.getWidth() / 2,

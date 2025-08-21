@@ -25,7 +25,7 @@ class NutritionLoggerApp extends Application.AppBase {
   var mFoodField as Fit.Field?;
 
   // Counters and selection
-  var mRPE as Number = 0;
+  var mRPE as Number = 1; // Should start at 1 (RPE 3-4)
   var mCounters as Array<Number> = [0, 0, 0]; // [water, electrolytes, food]
   var mSelectedIndex as Number = -1; // -1..3
 
@@ -74,7 +74,7 @@ class NutritionLoggerApp extends Application.AppBase {
 
   // Helpers
   function resetCounters() as Void {
-    mRPE = 0;
+    mRPE = 1; // Should start at 1 (RPE 3-4)
     mCounters = [0, 0, 0];
     mSelectedIndex = -1; // No variable selected yet
   }

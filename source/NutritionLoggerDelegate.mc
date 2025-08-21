@@ -3,6 +3,7 @@ import Toybox.WatchUi;
 using Toybox.System as Sys;
 using Toybox.Activity as Activity;
 using Toybox.ActivityRecording as AR;
+using Toybox.Attention as Attention;
 
 class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
   var mLastKeyDownAt as Number?; // for measuring press duration
@@ -32,16 +33,18 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       return onBackKey();
     }
 
-    if (key == WatchUi.KEY_UP || key == WatchUi.KEY_MENU) {
-      app.mSelectedIndex = (app.mSelectedIndex + 5) % 5 - 1;
-      WatchUi.requestUpdate();
-      return true;
-    } else if (key == WatchUi.KEY_DOWN) {
-      app.mSelectedIndex = (app.mSelectedIndex + 2) % 5 - 1;
-      WatchUi.requestUpdate();
-      return true;
+    if (session.isRecording()){
+      if (key == WatchUi.KEY_UP || key == WatchUi.KEY_MENU) {
+        app.mSelectedIndex = ((app.mSelectedIndex + 5) % 5) - 1;
+        WatchUi.requestUpdate();
+        return true;
+      } else if (key == WatchUi.KEY_DOWN) {
+        app.mSelectedIndex = ((app.mSelectedIndex + 2) % 5) - 1;
+        WatchUi.requestUpdate();
+        return true;
+      }
     }
-    if (session != null && session.isRecording()) {
+    if (session.isRecording()) {
       return true;
     }
     return false;
@@ -59,12 +62,16 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
           :name => "Trail Run",
           :sport => Activity.SPORT_RUNNING,
           :subSport => Activity.SUB_SPORT_TRAIL,
-          :sensorLogger => app.logger
+          :sensorLogger => app.logger,
         });
         app.resetCounters();
         app.initFitFields();
         app.mSession.setTimerEventListener(method(:onTimerEvent));
         app.mSession.start();
+        // Sound a beep when session starts
+        if (Attention has :playTone) {
+          Attention.playTone(Attention.TONE_START);
+        }
       } catch (e) {
         Sys.println("Failed to start session: " + e);
       }
@@ -73,20 +80,37 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     }
 
     // App is started, handle counter increment
-    if (app.mSelectedIndex != null && app.mSelectedIndex != -1) {
-      var idx = app.mSelectedIndex;
-      if (idx == app.RPE_FIELD) {
-        // Cycle thorugh RPE (0 - 4)
-        app.mRPE = (app.mRPE + 1) % 5;
-        app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
-      }else {
-        // Increment selected counter
-        var counterIdx = idx - 1; // Counter index start at 0
-        app.mCounters[counterIdx] = app.mCounters[counterIdx] + 1;
-        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+    if (session.isRecording() && app.mSelectedIndex != null) {
+      if (app.mSelectedIndex == -1) {
+        Sys.println("Pausing");
+        // Pause
+        session.stop();
+        // Sound a beep when session stops
+        if (Attention has :playTone) {
+          Attention.playTone(Attention.TONE_STOP);
+        }
+        // Show paused menu with Resume/Save/Discard
+        WatchUi.pushView(
+          new Rez.Menus.MainMenu(),
+          new NutritionLoggerMenuDelegate(true),
+          WatchUi.SLIDE_UP
+        );
+        WatchUi.requestUpdate();
+      } else {
+        var idx = app.mSelectedIndex;
+        if (idx == app.RPE_FIELD) {
+          // Increase RPE (0 - 4)
+          app.mRPE = app.mRPE + 1 < 4 ? app.mRPE + 1 : 4;
+          app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
+        } else {
+          // Increment selected counter
+          var counterIdx = idx - 1; // Counter index start at 0
+          app.mCounters[counterIdx] = app.mCounters[counterIdx] + 1;
+          app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+        }
+        WatchUi.requestUpdate();
+        return true;
       }
-      WatchUi.requestUpdate();
-      return true;
     }
 
     return false;
@@ -97,22 +121,39 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     var session = app.mSession;
 
     // Only handle back key when app is started and counter is selected
-    if (session != null && app.mSelectedIndex != null && app.mSelectedIndex != -1) {
-      // Decrement selected counter
-      var idx = app.mSelectedIndex;
-      if (idx == app.RPE_FIELD) {
-        // Cycle thorugh RPE (0 - 4)
-        app.mRPE = (app.mRPE + 4) % 5;
-        app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
-      }else {
-        var counterIdx = idx - 1; // Counter index start at 0
-        app.mCounters[counterIdx] = app.mCounters[counterIdx] - 1;
-        if (app.mCounters[counterIdx] < 0) {
-          app.mCounters[counterIdx] = 0;
+    if (session.isRecording() && app.mSelectedIndex != null) {
+      if (app.mSelectedIndex == -1) {
+        Sys.println("Pausing");
+        // Pause
+        session.stop();
+        // Sound a beep when session stops
+        if (Attention has :playTone) {
+          Attention.playTone(Attention.TONE_STOP);
         }
-        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+        // Show paused menu with Resume/Save/Discard
+        WatchUi.pushView(
+          new Rez.Menus.MainMenu(),
+          new NutritionLoggerMenuDelegate(true),
+          WatchUi.SLIDE_UP
+        );
+        WatchUi.requestUpdate();
+      } else {
+        // Decrement selected counter
+        var idx = app.mSelectedIndex;
+        if (idx == app.RPE_FIELD) {
+          // Decrease RPE (0 - 4)
+          app.mRPE = app.mRPE - 1 <= 0 ? 0 : app.mRPE - 1;
+          app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
+        } else {
+          var counterIdx = idx - 1; // Counter index start at 0
+          app.mCounters[counterIdx] = app.mCounters[counterIdx] - 1;
+          if (app.mCounters[counterIdx] < 0) {
+            app.mCounters[counterIdx] = 0;
+          }
+          app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+        }
+        WatchUi.requestUpdate();
       }
-      WatchUi.requestUpdate();
       return true;
     }
 
