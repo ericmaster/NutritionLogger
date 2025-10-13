@@ -153,6 +153,38 @@ class NutritionLoggerView extends WatchUi.View {
         arcStart,
         arcEnd
       );
+
+      dc.drawArc(
+        mScreenRadius,
+        mScreenRadius,
+        mArcRadius,
+        Graphics.ARC_COUNTER_CLOCKWISE,
+        172,
+        188
+      );
+
+      dc.drawArc(
+        mScreenRadius,
+        mScreenRadius,
+        mArcRadius,
+        Graphics.ARC_COUNTER_CLOCKWISE,
+        202,
+        218
+      );
+
+      var arrowUp = [
+        [10, mScreenRadius + 8],
+        [18, mScreenRadius - 8],
+        [26, mScreenRadius + 8],
+      ];
+      dc.fillPolygon(arrowUp);
+
+      var arrowDown = [
+        [22, mScreenRadius + 50],
+        [30, mScreenRadius + 66],
+        [38, mScreenRadius + 50],
+      ];
+      dc.fillPolygon(arrowDown);
     }
 
     if (drawSign) {
@@ -160,7 +192,7 @@ class NutritionLoggerView extends WatchUi.View {
       dc.drawText(
         mSignPlusX,
         mSignPlusY,
-        Graphics.FONT_TINY,
+        Graphics.FONT_SYSTEM_LARGE,
         "+",
         Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
       );
@@ -168,7 +200,7 @@ class NutritionLoggerView extends WatchUi.View {
       dc.drawText(
         mSignMinusX,
         mSignMinusY,
-        Graphics.FONT_TINY,
+        Graphics.FONT_SYSTEM_LARGE,
         "-",
         Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
       );
@@ -207,19 +239,19 @@ class NutritionLoggerView extends WatchUi.View {
     );
     y += 35;
     // Display distance
-    var distStr = "0 m";
+    var distStr = "0m";
     if (dist != null) {
       if (dist > 1000) {
-        distStr = Lang.format("$1$ km", [(dist / 1000).format("%.2f")]);
+        distStr = Lang.format("$1$km", [(dist / 1000).format("%.2f")]);
       } else {
-        distStr = Lang.format("$1$ m", [dist.format("%.2f")]);
+        distStr = Lang.format("$1$m", [dist.format("%.2f")]);
       }
     }
     //Display Altitude
-    var altStr = "0 m";
+    var altStr = "0m";
     if (info.altitude != null) {
       var altFormat = info.altitude.format("%.2f");
-      altStr = Lang.format("$1$ m", [altFormat]);
+      altStr = Lang.format("$1$m", [altFormat]);
     }
     dc.drawText(
       dc.getWidth() / 2,
@@ -246,43 +278,67 @@ class NutritionLoggerView extends WatchUi.View {
     // Custom variables section (using cached labels)
     var labels = [mStrRPE, mStrWater, mStrElectrolytes, mStrFood];
     var i = 0;
+    var x_center = dc.getWidth() / 2;
     while (i < 4) {
       var name = labels[i];
       var val = i == app.RPE_FIELD ? app.mRPE : app.mCounters[i - 1]; // Counters index start at 0
       var line = "";
       var color = Graphics.COLOR_LT_GRAY;
+      var font = Graphics.FONT_TINY;
+      var val_format = "";
+      var y_gap = i * 25;
       if (i == app.RPE_FIELD) {
-        line =
-          name +
-          ": " +
+        val_format = 
           (app.mRPE * 2 + 1).toString() +
           "-" +
           (app.mRPE * 2 + 2).toString();
-        if (i == app.mSelectedIndex && isRec) {
-          color = getRPEColor(app.mRPE);
-        }
       } else {
-        line = name + ": " + val.format("%.0f");
-        if (i == app.mSelectedIndex) {
-          if (isRec) {
-            color = Graphics.COLOR_YELLOW;
+        val_format = val.format("%.0f");
+      } 
+      line = name + ": " + val_format;
+      if (i == app.mSelectedIndex) {
+        y_gap = i * 25 - 5;
+        font = Graphics.FONT_LARGE;
+        if (isRec) {
+          if (i == app.RPE_FIELD) {
+            color = getRPEColor(app.mRPE);
           }
           else {
-            color = Graphics.COLOR_WHITE;
+            color = Graphics.COLOR_YELLOW;
           }
         }
+        else {
+          color = Graphics.COLOR_WHITE;
+        }
       }
+      
       // If not recording, display as disabled
       dc.setColor(color, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
-        dc.getWidth() / 2,
-        y,
-        Graphics.FONT_SMALL,
+        x_center,
+        y + y_gap,
+        font,
         line,
         Graphics.TEXT_JUSTIFY_CENTER
       );
-      y += 25;
       i += 1;
+    }
+
+    if (app.mSelectedIndex == -1 && app.mSession != null) {
+      var y_center = dc.getHeight() / 2;
+      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
+      dc.fillRectangle(
+        x_center - 15,
+        y_center - 15,
+        30,
+        30
+      );
+      dc.setPenWidth(2);
+      dc.drawCircle(
+        x_center,
+        y_center,
+        30
+      );
     }
   }
 

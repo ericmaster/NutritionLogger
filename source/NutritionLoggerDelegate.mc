@@ -66,6 +66,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
           :sensorLogger => app.logger,
         });
         app.resetCounters();
+        app.mSelectedIndex = 0;
         app.initFitFields();
         app.mSession.setTimerEventListener(method(:onTimerEvent));
         app.mSession.start();

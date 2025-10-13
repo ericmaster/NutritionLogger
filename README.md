@@ -67,3 +67,14 @@ During activity paused:
 - Run the App in the Simulator:
     - With a source file (.mc extension) open in the editor, go to the top menu and select Run > Run Without Debugging (Ctrl+F5 or Cmd+F5).
     - Select your target test watch from the list. The Garmin simulator should launch, displaying your new application. 
+
+## Side Loading an App
+
+In VSCode
+
+- Use Ctrl + Shift + P (Command + Shift + P on the Mac) to summon the command palette
+- In the command palette type "Build for Device" and select Monkey C: Build for Device
+- Select the product you wish to build for.
+- Choose a directory for the output and click Select Folder
+- In your file manager, go to the directory selected in step 4
+- Copy the generated PRG files to your device's GARMIN/APPS directory
