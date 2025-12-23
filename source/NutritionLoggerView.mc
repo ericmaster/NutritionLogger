@@ -8,6 +8,10 @@ using Toybox.Sensor as Sensor;
 using Toybox.Math;
 
 class NutritionLoggerView extends WatchUi.View {
+  // Pre-computed trig values for 30 degrees (static, never changes)
+  const COS_30 = 0.866025403784; // Math.cos(Math.toRadians(30))
+  const SIN_30 = 0.5;            // Math.sin(Math.toRadians(30))
+
   var mUpdateTimer as Timer.Timer?;
   var mHeartRate; // current heart rate (bpm)
   var mPulseOx; // blood oxygen saturation (%)
@@ -20,6 +24,15 @@ class NutritionLoggerView extends WatchUi.View {
   var mStrWater as String?;
   var mStrElectrolytes as String?;
   var mStrFood as String?;
+
+  // Cached layout values (computed once in onLayout)
+  var mScreenRadius as Number?;
+  var mArcRadius as Number?;
+  var mSignRadius as Number?;
+  var mSignPlusX as Float?;
+  var mSignPlusY as Float?;
+  var mSignMinusX as Float?;
+  var mSignMinusY as Float?;
 
   function initialize() {
     View.initialize();
@@ -52,6 +65,17 @@ class NutritionLoggerView extends WatchUi.View {
     mStrWater = WatchUi.loadResource(Rez.Strings.counter_water);
     mStrElectrolytes = WatchUi.loadResource(Rez.Strings.counter_electrolytes);
     mStrFood = WatchUi.loadResource(Rez.Strings.counter_food);
+
+    // Cache layout values (screen-dependent but static after layout)
+    mScreenRadius = dc.getWidth() / 2;
+    mArcRadius = mScreenRadius - 6;
+    mSignRadius = mScreenRadius - 4;
+
+    // Pre-compute +/- sign positions using cached trig values
+    mSignPlusX = mSignRadius * (1.0 + COS_30);
+    mSignPlusY = mSignRadius * (1.0 - SIN_30) + 10;
+    mSignMinusX = mSignRadius * (1.0 + COS_30);
+    mSignMinusY = mSignRadius * (1.0 + SIN_30) - 2;
   }
 
   // Called when this View is brought to the foreground. Restore
@@ -104,16 +128,14 @@ class NutritionLoggerView extends WatchUi.View {
       mUpdateTimer.stop();
     }
 
-    // Start button hint
-    var screenRadius = dc.getWidth() / 2;
-    var arcRadius = screenRadius - 6;
+    // Start button hint (using cached values)
     var arcStart = 22; // degrees
     var arcEnd = 38; // degrees
     dc.setPenWidth(2);
     dc.drawArc(
-      screenRadius,
-      screenRadius,
-      arcRadius,
+      mScreenRadius,
+      mScreenRadius,
+      mArcRadius,
       Graphics.ARC_COUNTER_CLOCKWISE,
       arcStart,
       arcEnd
@@ -124,9 +146,9 @@ class NutritionLoggerView extends WatchUi.View {
       arcStart = 322; // degrees
       arcEnd = 338; // degrees
       dc.drawArc(
-        screenRadius,
-        screenRadius,
-        arcRadius,
+        mScreenRadius,
+        mScreenRadius,
+        mArcRadius,
         Graphics.ARC_COUNTER_CLOCKWISE,
         arcStart,
         arcEnd
@@ -134,18 +156,18 @@ class NutritionLoggerView extends WatchUi.View {
     }
 
     if (drawSign) {
-      var signRadius = screenRadius - 4;
+      // Use pre-computed positions for +/- signs
       dc.drawText(
-        signRadius * (1.0 + Math.cos(Math.toRadians(30))),
-        signRadius * (1.0 - Math.sin(Math.toRadians(30))) + 10,
+        mSignPlusX,
+        mSignPlusY,
         Graphics.FONT_TINY,
         "+",
         Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
       );
 
       dc.drawText(
-        signRadius * (1.0 + Math.cos(Math.toRadians(30))),
-        signRadius * (1.0 + Math.sin(Math.toRadians(30))) - 2,
+        mSignMinusX,
+        mSignMinusY,
         Graphics.FONT_TINY,
         "-",
         Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
