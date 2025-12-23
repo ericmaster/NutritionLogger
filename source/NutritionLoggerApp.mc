@@ -29,7 +29,7 @@ class NutritionLoggerApp extends Application.AppBase {
   var mCounters as Array<Number> = [0, 0, 0]; // [water, electrolytes, food]
   var mSelectedIndex as Number = -1; // -1..3
 
-  var logger;
+  var logger as SensorLogging.SensorLogger?;
 
   function initialize() {
     AppBase.initialize();
@@ -37,17 +37,21 @@ class NutritionLoggerApp extends Application.AppBase {
 
   // onStart() is called on application start up
   function onStart(state as Dictionary?) as Void {
-    logger = new SensorLogging.SensorLogger({
-      :accelerometer => { :enabled => true },
-      :gyroscope => { :enabled => true },
-    });
-
+    // SensorLogger initialized in initSensorLogger() when recording starts
     // Sensor initialization consolidated in NutritionLoggerView.onShow()
 
     Position.enableLocationEvents(
       Position.LOCATION_CONTINUOUS,
       method(:onPosition)
     );
+  }
+
+  // Initialize accelerometer/gyroscope logging when recording starts
+  function initSensorLogger() as Void {
+    logger = new SensorLogging.SensorLogger({
+      :accelerometer => { :enabled => true },
+      :gyroscope => { :enabled => true },
+    });
   }
 
   // onStop() is called when your application is exiting

@@ -58,6 +58,8 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     if (session == null) {
       debugLog("Starting new session");
       try {
+        // Initialize accelerometer/gyroscope logging when recording starts
+        app.initSensorLogger();
         app.mSession = AR.createSession({
           :name => "Trail Run",
           :sport => Activity.SPORT_RUNNING,
