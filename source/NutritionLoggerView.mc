@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.WatchUi;
 using Toybox.System as Sys;
 using Toybox.Activity as Activity;
@@ -11,6 +12,14 @@ class NutritionLoggerView extends WatchUi.View {
   var mHeartRate; // current heart rate (bpm)
   var mPulseOx; // blood oxygen saturation (%)
   var mTemperature; // temperature (Celsius)
+
+  // Cached string resources (loaded once in onLayout)
+  var mStrRecording as String?;
+  var mStrIdle as String?;
+  var mStrRPE as String?;
+  var mStrWater as String?;
+  var mStrElectrolytes as String?;
+  var mStrFood as String?;
 
   function initialize() {
     View.initialize();
@@ -35,6 +44,14 @@ class NutritionLoggerView extends WatchUi.View {
   // Load your resources here
   function onLayout(dc as Dc) as Void {
     setLayout(Rez.Layouts.MainLayout(dc));
+
+    // Cache string resources to avoid loading on every screen refresh
+    mStrRecording = WatchUi.loadResource(Rez.Strings.status_recording);
+    mStrIdle = WatchUi.loadResource(Rez.Strings.status_idle);
+    mStrRPE = WatchUi.loadResource(Rez.Strings.rpe);
+    mStrWater = WatchUi.loadResource(Rez.Strings.counter_water);
+    mStrElectrolytes = WatchUi.loadResource(Rez.Strings.counter_electrolytes);
+    mStrFood = WatchUi.loadResource(Rez.Strings.counter_food);
   }
 
   // Called when this View is brought to the foreground. Restore
@@ -135,7 +152,7 @@ class NutritionLoggerView extends WatchUi.View {
       );
     }
 
-    var status = isRec ? Rez.Strings.status_recording : Rez.Strings.status_idle;
+    var status = isRec ? mStrRecording : mStrIdle;
     if (isRec) {
       dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
     }
@@ -143,7 +160,7 @@ class NutritionLoggerView extends WatchUi.View {
       dc.getWidth() / 2,
       y,
       Graphics.FONT_XTINY,
-      WatchUi.loadResource(status),
+      status,
       Graphics.TEXT_JUSTIFY_CENTER
     );
     y += 25;
@@ -204,13 +221,8 @@ class NutritionLoggerView extends WatchUi.View {
     );
     y += 40;
 
-    // Custom variables section
-    var labels = [
-      WatchUi.loadResource(Rez.Strings.rpe),
-      WatchUi.loadResource(Rez.Strings.counter_water),
-      WatchUi.loadResource(Rez.Strings.counter_electrolytes),
-      WatchUi.loadResource(Rez.Strings.counter_food),
-    ];
+    // Custom variables section (using cached labels)
+    var labels = [mStrRPE, mStrWater, mStrElectrolytes, mStrFood];
     var i = 0;
     while (i < 4) {
       var name = labels[i];
