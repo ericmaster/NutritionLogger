@@ -14,10 +14,10 @@ class NutritionLoggerMenuDelegate extends WatchUi.MenuInputDelegate {
 
   function onMenuItem(item as Symbol) as Void {
     var app = getApp();
-    Sys.println("mPostStop: " + mPostStop);
+    debugLog("mPostStop: " + mPostStop);
     if (mPostStop) {
       if (item == :item_1) {
-        Sys.println("Resume");
+        debugLog("Resume");
         // Resume
         if (app.mSession != null && !app.mSession.isRecording()) {
           app.mSession.start();
@@ -27,7 +27,7 @@ class NutritionLoggerMenuDelegate extends WatchUi.MenuInputDelegate {
         // Save
         if (app.mSession != null) {
           var ok = app.mSession.save();
-          System.println("Save: " + ok);
+          debugLog("Save: " + ok);
           app.mSession = null;
         }
         System.exit();
@@ -35,16 +35,16 @@ class NutritionLoggerMenuDelegate extends WatchUi.MenuInputDelegate {
         // Discard
         if (app.mSession != null) {
           var ok2 = app.mSession.discard();
-          System.println("Discard: " + ok2);
+          debugLog("Discard: " + ok2);
           app.mSession = null;
         }
         System.exit();
       }
     } else {
-      Sys.println("Else");
+      debugLog("Else");
       // Idle menu: Close app
       if (item == :item_2 || item == :item_3) {
-        System.println("Closing app");
+        debugLog("Closing app");
         System.exit();
       }
     }

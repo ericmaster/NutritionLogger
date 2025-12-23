@@ -25,7 +25,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     var app = getApp();
     var session = app.mSession;
     var key = keyEvent.getKey();
-    Sys.println("Key pressed: " + key);
+    debugLog("Key pressed: " + key);
 
     if (key == WatchUi.KEY_ENTER) {
       return onStartKey();
@@ -56,7 +56,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
 
     // Only react to Start/Stop (ENTER) when app is not started
     if (session == null) {
-      Sys.println("Starting new session");
+      debugLog("Starting new session");
       try {
         app.mSession = AR.createSession({
           :name => "Trail Run",
@@ -73,7 +73,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
           Attention.playTone(Attention.TONE_START);
         }
       } catch (e) {
-        Sys.println("Failed to start session: " + e);
+        debugLog("Failed to start session: " + e);
       }
       WatchUi.requestUpdate();
       return true;
@@ -82,7 +82,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     // App is started, handle counter increment
     if (session.isRecording() && app.mSelectedIndex != null) {
       if (app.mSelectedIndex == -1) {
-        Sys.println("Pausing");
+        debugLog("Pausing");
         // Pause
         session.stop();
         // Sound a beep when session stops
@@ -123,7 +123,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     // Only handle back key when app is started and counter is selected
     if (session.isRecording() && app.mSelectedIndex != null) {
       if (app.mSelectedIndex == -1) {
-        Sys.println("Pausing");
+        debugLog("Pausing");
         // Pause
         session.stop();
         // Sound a beep when session stops

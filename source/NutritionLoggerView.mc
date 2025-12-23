@@ -9,6 +9,8 @@ using Toybox.Math;
 class NutritionLoggerView extends WatchUi.View {
   var mUpdateTimer as Timer.Timer?;
   var mHeartRate; // current heart rate (bpm)
+  var mPulseOx; // blood oxygen saturation (%)
+  var mTemperature; // temperature (Celsius)
 
   function initialize() {
     View.initialize();
@@ -45,9 +47,13 @@ class NutritionLoggerView extends WatchUi.View {
     // Request an update every second
     // mUpdateTimer.start(method(:tick), 1000, true);
 
-    // Enable heart rate sensor and start receiving events at 1 Hz
+    // Enable all sensors and start receiving events at 1 Hz
     // Requires Sensor permission (declared in manifest)
-    Sensor.setEnabledSensors([Sensor.SENSOR_HEARTRATE]);
+    Sensor.setEnabledSensors([
+      Sensor.SENSOR_HEARTRATE,
+      Sensor.SENSOR_PULSE_OXIMETRY,
+      Sensor.SENSOR_TEMPERATURE
+    ]);
     Sensor.enableSensorEvents(method(:onSensor));
   }
 
@@ -60,7 +66,7 @@ class NutritionLoggerView extends WatchUi.View {
     var y = 10;
     var isRec = app.mSession != null && app.mSession.isRecording();
     var drawSign = false;
-    Sys.println(isRec ? "Recording" : "Idle");
+    debugLog(isRec ? "Recording" : "Idle");
 
     // HINTS RENDER
     if (isRec) {
@@ -184,17 +190,16 @@ class NutritionLoggerView extends WatchUi.View {
       Graphics.TEXT_JUSTIFY_CENTER
     );
     y += 30;
-    // Display Heart Rate
-    var hrStr = "-- bpm";
-    if (mHeartRate != null) {
-      var hrFormat = mHeartRate.format("%.0f");
-      hrStr = Lang.format("$1$ bpm", [hrFormat]);
-    }
+    // Display Heart Rate, SpO2, and Temperature on one line
+    var hrStr = mHeartRate != null ? mHeartRate.format("%.0f") : "--";
+    var spo2Str = mPulseOx != null ? mPulseOx.format("%.0f") + "%" : "--%";
+    var tempStr = mTemperature != null ? mTemperature.format("%.1f") + "°" : "--°";
+    var vitalsStr = hrStr + " bpm | " + spo2Str + " | " + tempStr;
     dc.drawText(
       dc.getWidth() / 2,
       y,
       Graphics.FONT_SMALL,
-      hrStr,
+      vitalsStr,
       Graphics.TEXT_JUSTIFY_CENTER
     );
     y += 40;
@@ -255,11 +260,12 @@ class NutritionLoggerView extends WatchUi.View {
       mUpdateTimer.stop();
       mUpdateTimer = null;
     }
-    // Stop receiving sensor events and disable heart rate sensor
+    // Stop receiving sensor events and disable all sensors
     Sensor.enableSensorEvents(null);
-    // Prefer disabling only HR to avoid affecting other sensors
-    Sensor.disableSensorType(Sensor.SENSOR_HEARTRATE);
+    Sensor.setEnabledSensors([]);
     mHeartRate = null;
+    mPulseOx = null;
+    mTemperature = null;
   }
 
   function tick() as Void {
@@ -268,9 +274,27 @@ class NutritionLoggerView extends WatchUi.View {
 
   // Sensor callback (invoked ~1 Hz when enabled)
   function onSensor(info as Sensor.Info) as Void {
-    // Some devices may omit fields; guard with 'has'
+    var needsUpdate = false;
+
+    // Heart rate
     if (info has :heartRate && info.heartRate != null) {
       mHeartRate = info.heartRate;
+      needsUpdate = true;
+    }
+
+    // Pulse oximetry (SpO2)
+    if (info has :oxygenSaturation && info.oxygenSaturation != null) {
+      mPulseOx = info.oxygenSaturation;
+      needsUpdate = true;
+    }
+
+    // Temperature
+    if (info has :temperature && info.temperature != null) {
+      mTemperature = info.temperature;
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
       WatchUi.requestUpdate();
     }
   }

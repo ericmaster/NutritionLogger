@@ -42,14 +42,7 @@ class NutritionLoggerApp extends Application.AppBase {
       :gyroscope => { :enabled => true },
     });
 
-    Sensor.setEnabledSensors([
-      Sensor.SENSOR_HEARTRATE,
-      Sensor.SENSOR_PULSE_OXIMETRY,
-      Sensor.SENSOR_TEMPERATURE,
-    ]);
-    Sensor.enableSensorEvents(method(:onSensor));
-
-    // Sensor.registerSensorDataListener(method(""))
+    // Sensor initialization consolidated in NutritionLoggerView.onShow()
 
     Position.enableLocationEvents(
       Position.LOCATION_CONTINUOUS,
@@ -114,7 +107,7 @@ class NutritionLoggerApp extends Application.AppBase {
       mElectrolytesField.setData(0);
       mFoodField.setData(0);
     } catch (e) {
-      Sys.println("Failed to init Fit fields: " + e);
+      debugLog("Failed to init Fit fields: " + e);
     }
   }
 
@@ -131,11 +124,7 @@ class NutritionLoggerApp extends Application.AppBase {
   }
 
   function onPosition(info as Position.Info) as Void {
-    // System.println("Position: " + info.latitude + ", " + info.longitude);
-  }
-
-  function onSensor(sensorInfo as Sensor.Info) as Void {
-    System.println("Heart Rate: " + sensorInfo.heartRate);
+    // debugLog("Position: " + info.latitude + ", " + info.longitude);
   }
 }
 
