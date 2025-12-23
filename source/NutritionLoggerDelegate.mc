@@ -43,9 +43,8 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
         WatchUi.requestUpdate();
         return true;
       }
-    }
-    if (session.isRecording()) {
-      return true;
+      // Do nothing if key is not handled
+      return false;
     }
     return false;
   }
