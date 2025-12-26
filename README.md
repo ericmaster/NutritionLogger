@@ -6,35 +6,31 @@ During Activity it has the ability to record 3 custom counters:
 - Water intake
 - Electrolytes intake
 - Food intake
+- **RPE (Rate of Perceived Exertion)**
 
 The app will have 3 modes:
 - 0: App Started
 - 1: Activity recording
-- 2: Activity paused
+- 2: Menu / Background Recording
 
 - During activity recording a screen will display some of the recorded data using FitContributor
-- During activity paused a menu will be displayed where the user can
-    - Resume the activity
+- Pressing Back opens a menu where the user can:
+    - Resume the activity (Dismiss menu)
     - Save the activity FIT file (and exit)
     - Discard the activity (and exit)
 
 ## Button mapping
 
 On app start/initialization:
-- Start/Stop: Start/Pause activity
-- Back/Lap: Closes App
+- **Start/Stop**: Start activity
+- **Back/Lap**: Closes App
 
 During activity recording:
-- Start/Stop: Pause Activity
-- Up/Menu: Cycle up the custom recording items
-- Down: Cycle down the custom recording items
-- Light: Record intake of currently selected recording item at the elapsed timestamp
-- Back/Lap: Undo intake recording (in case accidentally pressed button)
-
-During activity paused:
-- Start/Stop: Select menu item
-- Up/Menu: Cycle up the custom recording items
-- Down: Cycle down the recording items
+- **Start (Short Press)**: **Add (+1)** to selected item / Increase RPE
+- **Start (Long Press > 1s)**: **Undo (-1)** from selected item / Decrease RPE (Triggers immediately on hold)
+- **Back**: Open Menu (Resume/Save/Discard) - *Recording continues in background*
+- **Up / Down**: Cycle through data fields (RPE, Water, Electrolytes, Food)
+- **Light**: System Default (Backlight)
 
 ## Development Setup
 

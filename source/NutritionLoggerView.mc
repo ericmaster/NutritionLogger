@@ -20,10 +20,18 @@ class NutritionLoggerView extends WatchUi.View {
   // Cached string resources (loaded once in onLayout)
   var mStrRecording as String?;
   var mStrIdle as String?;
+  var mStrPause as String?;
   var mStrRPE as String?;
   var mStrWater as String?;
   var mStrElectrolytes as String?;
   var mStrFood as String?;
+  
+  // RPE difficulty labels
+  var mStrRPEEasy as String?;
+  var mStrRPEModerate as String?;
+  var mStrRPEHard as String?;
+  var mStrRPEVeryHard as String?;
+  var mStrRPEMax as String?;
 
   // Cached layout values (computed once in onLayout)
   var mScreenRadius as Number?;
@@ -61,10 +69,18 @@ class NutritionLoggerView extends WatchUi.View {
     // Cache string resources to avoid loading on every screen refresh
     mStrRecording = WatchUi.loadResource(Rez.Strings.status_recording);
     mStrIdle = WatchUi.loadResource(Rez.Strings.status_idle);
+    mStrPause = WatchUi.loadResource(Rez.Strings.pause_action);
     mStrRPE = WatchUi.loadResource(Rez.Strings.rpe);
     mStrWater = WatchUi.loadResource(Rez.Strings.counter_water);
     mStrElectrolytes = WatchUi.loadResource(Rez.Strings.counter_electrolytes);
     mStrFood = WatchUi.loadResource(Rez.Strings.counter_food);
+    
+    // Cache RPE difficulty labels
+    mStrRPEEasy = WatchUi.loadResource(Rez.Strings.rpe_easy);
+    mStrRPEModerate = WatchUi.loadResource(Rez.Strings.rpe_moderate);
+    mStrRPEHard = WatchUi.loadResource(Rez.Strings.rpe_hard);
+    mStrRPEVeryHard = WatchUi.loadResource(Rez.Strings.rpe_very_hard);
+    mStrRPEMax = WatchUi.loadResource(Rez.Strings.rpe_max);
 
     // Cache layout values (screen-dependent but static after layout)
     mScreenRadius = dc.getWidth() / 2;
@@ -106,21 +122,14 @@ class NutritionLoggerView extends WatchUi.View {
     var app = getApp();
     var y = 10;
     var isRec = app.mSession != null && app.mSession.isRecording();
-    var drawSign = false;
     debugLog(isRec ? "Recording" : "Idle");
 
     // HINTS RENDER
     if (isRec) {
-      if (app.mSelectedIndex == -1) {
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+      if (app.mSelectedIndex == app.RPE_FIELD) {
+        dc.setColor(getRPEColor(app.mRPE), Graphics.COLOR_TRANSPARENT);
       } else {
-        drawSign = true;
-        if (app.mSelectedIndex == app.RPE_FIELD) {
-          dc.setColor(getRPEColor(app.mRPE), Graphics.COLOR_TRANSPARENT);
-        }
-        else {
-          dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-        }
+        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
       }
       mUpdateTimer.start(method(:tick), 1000, true);
     } else {
@@ -140,11 +149,24 @@ class NutritionLoggerView extends WatchUi.View {
       arcStart,
       arcEnd
     );
+    
+    // Show button hint text near START button (Add)
+    if (isRec) {
+      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+      dc.drawText(
+        mScreenRadius + mArcRadius - 30,
+        15,
+        Graphics.FONT_XTINY,
+        "+1",
+        Graphics.TEXT_JUSTIFY_RIGHT
+      );
+    }
 
-    // Back button hint
+    // Back button hint (Menu)
     if (isRec) {
       arcStart = 322; // degrees
       arcEnd = 338; // degrees
+      dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
       dc.drawArc(
         mScreenRadius,
         mScreenRadius,
@@ -152,6 +174,16 @@ class NutritionLoggerView extends WatchUi.View {
         Graphics.ARC_COUNTER_CLOCKWISE,
         arcStart,
         arcEnd
+      );
+      
+      // Show button hint text near BACK button
+      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+      dc.drawText(
+        mScreenRadius + mArcRadius - 30,
+        dc.getHeight() - 15,
+        Graphics.FONT_XTINY,
+        "MENU",
+        Graphics.TEXT_JUSTIFY_RIGHT
       );
 
       dc.drawArc(
@@ -187,7 +219,8 @@ class NutritionLoggerView extends WatchUi.View {
       dc.fillPolygon(arrowDown);
     }
 
-    if (drawSign) {
+    // Always draw signs (no pause selection anymore)
+    if (isRec) {
       // Use pre-computed positions for +/- signs
       dc.drawText(
         mSignPlusX,
@@ -276,43 +309,57 @@ class NutritionLoggerView extends WatchUi.View {
     y += 40;
 
     // Custom variables section (using cached labels)
+    // 4 items: RPE, Water, Electrolytes, Food
     var labels = [mStrRPE, mStrWater, mStrElectrolytes, mStrFood];
     var i = 0;
     var x_center = dc.getWidth() / 2;
     while (i < 4) {
       var name = labels[i];
-      var val = i == app.RPE_FIELD ? app.mRPE : app.mCounters[i - 1]; // Counters index start at 0
       var line = "";
       var color = Graphics.COLOR_LT_GRAY;
       var font = Graphics.FONT_TINY;
-      var val_format = "";
-      var y_gap = i * 25;
+      var y_gap = i * 22;
+      
+      // Build display string based on item type
       if (i == app.RPE_FIELD) {
-        val_format = 
-          (app.mRPE * 2 + 1).toString() +
-          "-" +
-          (app.mRPE * 2 + 2).toString();
+        // RPE with range and difficulty label
+        var rpeRange = (app.mRPE * 2 + 1).toString() + "-" + (app.mRPE * 2 + 2).toString();
+        var rpeDifficulty = "";
+        if (app.mRPE == 0) {
+          rpeDifficulty = mStrRPEEasy;
+        } else if (app.mRPE == 1) {
+          rpeDifficulty = mStrRPEModerate;
+        } else if (app.mRPE == 2) {
+          rpeDifficulty = mStrRPEHard;
+        } else if (app.mRPE == 3) {
+          rpeDifficulty = mStrRPEVeryHard;
+        } else {
+          rpeDifficulty = mStrRPEMax;
+        }
+        line = name + ": " + rpeRange + " (" + rpeDifficulty + ")";
       } else {
-        val_format = val.format("%.0f");
-      } 
-      line = name + ": " + val_format;
+        // Water, Electrolytes, Food counters
+        var counterIdx = i - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
+        var val = app.mCounters[counterIdx];
+        line = name + ": " + val.format("%.0f");
+      }
+      
+      // Highlight selected item
       if (i == app.mSelectedIndex) {
-        y_gap = i * 25 - 5;
-        font = Graphics.FONT_LARGE;
+        y_gap = i * 22 - 3;
+        font = Graphics.FONT_MEDIUM;
         if (isRec) {
           if (i == app.RPE_FIELD) {
             color = getRPEColor(app.mRPE);
-          }
-          else {
+          } else {
             color = Graphics.COLOR_YELLOW;
           }
-        }
-        else {
+        } else {
           color = Graphics.COLOR_WHITE;
         }
       }
       
-      // If not recording, display as disabled
+      // Draw the line
       dc.setColor(color, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
         x_center,
@@ -322,23 +369,6 @@ class NutritionLoggerView extends WatchUi.View {
         Graphics.TEXT_JUSTIFY_CENTER
       );
       i += 1;
-    }
-
-    if (app.mSelectedIndex == -1 && app.mSession != null) {
-      var y_center = dc.getHeight() / 2;
-      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-      dc.fillRectangle(
-        x_center - 15,
-        y_center - 15,
-        30,
-        30
-      );
-      dc.setPenWidth(2);
-      dc.drawCircle(
-        x_center,
-        y_center,
-        30
-      );
     }
   }
 

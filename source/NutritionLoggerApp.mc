@@ -10,7 +10,8 @@ using Toybox.ActivityRecording as AR;
 using Toybox.FitContributor as Fit;
 
 class NutritionLoggerApp extends Application.AppBase {
-  // Developer Fields Constants
+  // Developer Fields Constants  
+  // Selection indices: 0=RPE, 1=Water, 2=Electrolytes, 3=Food
   const RPE_FIELD = 0;
   const WATER_FIELD = 1;
   const ELECTROLYTES_FIELD = 2;
@@ -27,9 +28,10 @@ class NutritionLoggerApp extends Application.AppBase {
   // Counters and selection
   var mRPE as Number = 1; // Should start at 1 (RPE 3-4)
   var mCounters as Array<Number> = [0, 0, 0]; // [water, electrolytes, food]
-  var mSelectedIndex as Number = -1; // -1..3
+  var mSelectedIndex as Number = 0; // 0=RPE, 1=Water, 2=Electrolytes, 3=Food (default to RPE)
 
   var logger as SensorLogging.SensorLogger?;
+  var mDelegate as NutritionLoggerDelegate?;
 
   function initialize() {
     AppBase.initialize();
@@ -66,14 +68,15 @@ class NutritionLoggerApp extends Application.AppBase {
 
   // Return the initial view of your application here
   function getInitialView() as [Views] or [Views, InputDelegates] {
-    return [new NutritionLoggerView(), new NutritionLoggerDelegate()];
+    mDelegate = new NutritionLoggerDelegate();
+    return [new NutritionLoggerView(), mDelegate];
   }
 
   // Helpers
   function resetCounters() as Void {
     mRPE = 1; // Should start at 1 (RPE 3-4)
     mCounters = [0, 0, 0];
-    mSelectedIndex = -1; // No variable selected yet
+    mSelectedIndex = RPE_FIELD; // Start with RPE selected (index 0)
   }
 
   function initFitFields() as Void {
@@ -116,13 +119,13 @@ class NutritionLoggerApp extends Application.AppBase {
   }
 
   function setFieldByIndex(idx as Number, value as Number) as Void {
-    if (idx == 0 && mRPEField != null) {
+    if (idx == RPE_FIELD && mRPEField != null) {
       mRPEField.setData(value);
-    } else if (idx == 1 && mWaterField != null) {
+    } else if (idx == WATER_FIELD && mWaterField != null) {
       mWaterField.setData(value);
-    } else if (idx == 2 && mElectrolytesField != null) {
+    } else if (idx == ELECTROLYTES_FIELD && mElectrolytesField != null) {
       mElectrolytesField.setData(value);
-    } else if (idx == 3 && mFoodField != null) {
+    } else if (idx == FOOD_FIELD && mFoodField != null) {
       mFoodField.setData(value);
     }
   }

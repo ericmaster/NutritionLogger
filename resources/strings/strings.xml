@@ -10,6 +10,14 @@
 
     <!-- Level labels -->
     <string id="rpe">RPE</string>
+    <string id="pause_action">Pause</string>
+    
+    <!-- RPE difficulty labels -->
+    <string id="rpe_easy">Very Easy</string>
+    <string id="rpe_moderate">Easy</string>
+    <string id="rpe_hard">Moderate</string>
+    <string id="rpe_very_hard">Hard</string>
+    <string id="rpe_max">Maximum</string>
 
     <!-- Counter labels -->
     <string id="counter_water">Water</string>

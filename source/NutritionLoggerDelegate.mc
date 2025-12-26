@@ -4,10 +4,13 @@ using Toybox.System as Sys;
 using Toybox.Activity as Activity;
 using Toybox.ActivityRecording as AR;
 using Toybox.Attention as Attention;
+using Toybox.Timer;
 
 class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
   var mLastKeyDownAt as Number?; // for measuring press duration
-  var mLastKeyCode as Number?; // track which key went down
+  var mHoldTimer as Timer.Timer?;
+  var mHoldTriggered as Boolean = false;
+  var mIgnoreNextRelease as Boolean = false;
 
   function initialize() {
     BehaviorDelegate.initialize();
@@ -25,6 +28,8 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     var app = getApp();
     var session = app.mSession;
     var key = keyEvent.getKey();
+    // Debug log to see which keys are actually received
+    debugLog("Debug - Key Pressed: " + key + " (Light=" + WatchUi.KEY_LIGHT + ")"); 
     debugLog("Key pressed: " + key);
 
     if (key == WatchUi.KEY_ENTER) {
@@ -33,13 +38,23 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       return onBackKey();
     }
 
-    if (session.isRecording()){
+    if (session != null && session.isRecording()){
       if (key == WatchUi.KEY_UP || key == WatchUi.KEY_MENU) {
-        app.mSelectedIndex = ((app.mSelectedIndex + 5) % 5) - 1;
+        // Cycle up: 0->3->2->1->0
+        app.mSelectedIndex = (app.mSelectedIndex + 3) % 4;
+        // Play selection tone
+        if (Attention has :playTone) {
+          Attention.playTone(Attention.TONE_KEY);
+        }
         WatchUi.requestUpdate();
         return true;
       } else if (key == WatchUi.KEY_DOWN) {
-        app.mSelectedIndex = ((app.mSelectedIndex + 2) % 5) - 1;
+        // Cycle down: 0->1->2->3->0
+        app.mSelectedIndex = (app.mSelectedIndex + 1) % 4;
+        // Play selection tone
+        if (Attention has :playTone) {
+          Attention.playTone(Attention.TONE_KEY);
+        }
         WatchUi.requestUpdate();
         return true;
       }
@@ -49,15 +64,115 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     return false;
   }
 
+
+
+  // Handle key release for short vs long press
+  function onKeyReleased(evt as KeyEvent) as Boolean {
+    var app = getApp();
+    if (app.mSession != null && app.mSession.isRecording() && evt.getKey() == WatchUi.KEY_ENTER) {
+      
+      // Stop hold timer if it's running
+      if (mHoldTimer != null) {
+        mHoldTimer.stop();
+        mHoldTimer = null;
+      }
+
+      // Check if we should ignore this release (e.g. just started session)
+      if (mIgnoreNextRelease) {
+        mIgnoreNextRelease = false;
+        mLastKeyDownAt = null;
+        return true;
+      }
+
+      // If hold logic didn't trigger (Short Press), then Increment
+      if (!mHoldTriggered) {
+        incrementCounter(app);
+      }
+      
+      // Reset state
+      mHoldTriggered = false;
+      mLastKeyDownAt = null;
+      return true;
+    }
+    return false;
+  }
+
+  // Timer callback for Long Press (Hold)
+  function onHoldTimer() as Void {
+    var app = getApp();
+    // Only if session is still recording
+    if (app.mSession != null && app.mSession.isRecording()) {
+        mHoldTriggered = true;
+        decrementCounter(app); // Execute undo immediately
+        debugLog("Hold Action Triggered (Decrement)");
+    }
+  }
+
+  function incrementCounter(app as NutritionLoggerApp) as Boolean {
+      var idx = app.mSelectedIndex;
+      if (idx == app.RPE_FIELD) {
+        // Increase RPE (0 - 4)
+        app.mRPE = app.mRPE + 1 < 4 ? app.mRPE + 1 : 4;
+        app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
+      } else {
+        // Increment selected counter (Water, Electrolytes, Food)
+        var counterIdx = idx - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
+        app.mCounters[counterIdx] = app.mCounters[counterIdx] + 1;
+        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+      }
+      
+      // Haptic feedback - short pulse
+      if (Attention has :vibrate) {
+        Attention.vibrate([new Attention.VibeProfile(50, 100)]);
+      }
+      // Audio feedback
+      if (Attention has :playTone) {
+        Attention.playTone(Attention.TONE_START);
+      }
+      
+      WatchUi.requestUpdate();
+      return true;
+  }
+
+  function decrementCounter(app as NutritionLoggerApp) as Boolean {
+      var idx = app.mSelectedIndex;
+      if (idx == app.RPE_FIELD) {
+        // Decrease RPE (0 - 4)
+        app.mRPE = app.mRPE - 1 <= 0 ? 0 : app.mRPE - 1;
+        app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
+      } else {
+        // Decrement selected counter
+        var counterIdx = idx - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
+        app.mCounters[counterIdx] = app.mCounters[counterIdx] - 1;
+        if (app.mCounters[counterIdx] < 0) {
+          app.mCounters[counterIdx] = 0;
+        }
+        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+      }
+      
+      // Haptic feedback - double pulse for undo/decrement
+      if (Attention has :vibrate) {
+        Attention.vibrate([
+          new Attention.VibeProfile(50, 100),
+          new Attention.VibeProfile(0, 50),
+          new Attention.VibeProfile(50, 100)
+        ]);
+      }
+      // Audio feedback
+      if (Attention has :playTone) {
+        Attention.playTone(Attention.TONE_RESET);
+      }
+      
+      WatchUi.requestUpdate();
+      return true;
+  }
+
   function onStartKey() as Boolean {
     var app = getApp();
-    var session = app.mSession;
-
-    // Only react to Start/Stop (ENTER) when app is not started
-    if (session == null) {
+    if (app.mSession == null) {
+      // Start new session
       debugLog("Starting new session");
       try {
-        // Initialize accelerometer/gyroscope logging when recording starts
         app.initSensorLogger();
         app.mSession = AR.createSession({
           :name => "Trail Run",
@@ -66,53 +181,28 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
           :sensorLogger => app.logger,
         });
         app.resetCounters();
-        app.mSelectedIndex = 0;
+        app.mSelectedIndex = app.RPE_FIELD; 
         app.initFitFields();
         app.mSession.setTimerEventListener(method(:onTimerEvent));
         app.mSession.start();
-        // Sound a beep when session starts
         if (Attention has :playTone) {
           Attention.playTone(Attention.TONE_START);
         }
+        mIgnoreNextRelease = true;
       } catch (e) {
         debugLog("Failed to start session: " + e);
+        mIgnoreNextRelease = false;
       }
       WatchUi.requestUpdate();
       return true;
     }
-
-    // App is started, handle counter increment
-    if (session.isRecording() && app.mSelectedIndex != null) {
-      if (app.mSelectedIndex == -1) {
-        debugLog("Pausing");
-        // Pause
-        session.stop();
-        // Sound a beep when session stops
-        if (Attention has :playTone) {
-          Attention.playTone(Attention.TONE_STOP);
-        }
-        // Show paused menu with Resume/Save/Discard
-        WatchUi.pushView(
-          new Rez.Menus.MainMenu(),
-          new NutritionLoggerMenuDelegate(true),
-          WatchUi.SLIDE_UP
-        );
-        WatchUi.requestUpdate();
-      } else {
-        var idx = app.mSelectedIndex;
-        if (idx == app.RPE_FIELD) {
-          // Increase RPE (0 - 4)
-          app.mRPE = app.mRPE + 1 < 4 ? app.mRPE + 1 : 4;
-          app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
-        } else {
-          // Increment selected counter
-          var counterIdx = idx - 1; // Counter index start at 0
-          app.mCounters[counterIdx] = app.mCounters[counterIdx] + 1;
-          app.setFieldByIndex(idx, app.mCounters[counterIdx]);
-        }
-        WatchUi.requestUpdate();
-        return true;
-      }
+    // If running, we let onKeyReleased handle the Short/Long press logic
+    if (app.mSession.isRecording()) {
+      mLastKeyDownAt = Sys.getTimer();
+      mHoldTriggered = false;
+      mHoldTimer = new Timer.Timer();
+      mHoldTimer.start(method(:onHoldTimer), 1000, false);
+      return true;
     }
 
     return false;
@@ -122,45 +212,23 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     var app = getApp();
     var session = app.mSession;
 
-    // Only handle back key when app is started and counter is selected
-    if (session.isRecording() && app.mSelectedIndex != null) {
-      if (app.mSelectedIndex == -1) {
-        debugLog("Pausing");
-        // Pause
-        session.stop();
-        // Sound a beep when session stops
-        if (Attention has :playTone) {
-          Attention.playTone(Attention.TONE_STOP);
-        }
-        // Show paused menu with Resume/Save/Discard
+    if (session != null && session.isRecording()) {
+        debugLog("Opening Menu (background recording)");
+        // Push custom menu view WITH delegate we can access
+        var menuDelegate = new NutritionLoggerMenuDelegate(true);
+        var menuView = new NutritionLoggerMenuView(menuDelegate);
         WatchUi.pushView(
-          new Rez.Menus.MainMenu(),
-          new NutritionLoggerMenuDelegate(true),
+          menuView,
+          menuDelegate,
           WatchUi.SLIDE_UP
         );
         WatchUi.requestUpdate();
-      } else {
-        // Decrement selected counter
-        var idx = app.mSelectedIndex;
-        if (idx == app.RPE_FIELD) {
-          // Decrease RPE (0 - 4)
-          app.mRPE = app.mRPE - 1 <= 0 ? 0 : app.mRPE - 1;
-          app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
-        } else {
-          var counterIdx = idx - 1; // Counter index start at 0
-          app.mCounters[counterIdx] = app.mCounters[counterIdx] - 1;
-          if (app.mCounters[counterIdx] < 0) {
-            app.mCounters[counterIdx] = 0;
-          }
-          app.setFieldByIndex(idx, app.mCounters[counterIdx]);
-        }
-        WatchUi.requestUpdate();
-      }
-      return true;
+        return true;
     }
-
     return false;
   }
+
+
 
   // Handle timer events to refresh UI
   function onTimerEvent(
