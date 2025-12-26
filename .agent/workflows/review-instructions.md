@@ -5,7 +5,7 @@ description: Load project instructions and architecture documentation
 This workflow loads the comprehensive project documentation into context.
 
 1. Read the main instructions file:
-   - View `INSTRUCTIONS.md` in the project root
+   - View `instructions.md` in the .agent folder
    - This contains complete architecture, setup, and development guidelines
 
 2. The instructions cover:
