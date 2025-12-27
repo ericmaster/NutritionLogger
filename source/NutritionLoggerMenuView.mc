@@ -67,21 +67,21 @@ class NutritionLoggerMenuView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             centerX,
-            dc.getHeight() - 45,
+            dc.getHeight() - 50,
             Graphics.FONT_XTINY,
             "UP/DOWN = Navigate",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
             centerX,
-            dc.getHeight() - 30,
+            dc.getHeight() - 35,
             Graphics.FONT_XTINY,
             "START = Select",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
             centerX,
-            dc.getHeight() - 15,
+            dc.getHeight() - 20,
             Graphics.FONT_XTINY,
             "BACK = Return",
             Graphics.TEXT_JUSTIFY_CENTER

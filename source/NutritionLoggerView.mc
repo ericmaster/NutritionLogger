@@ -32,10 +32,10 @@ class NutritionLoggerView extends WatchUi.View {
   var mScreenRadius as Number?;
   var mArcRadius as Number?;
   var mSignRadius as Number?;
-  var mSignPlusMinusX as Float?;
-  var mSignPlusMinusY as Float?;
-  var mSignMenuX as Float?;
-  var mSignMenuY as Float?;
+  var mSignUpperRightX as Float?;
+  var mSignUpperRightY as Float?;
+  var mSignLowerRightX as Float?;
+  var mSignLowerRightY as Float?;
 
   function initialize() {
     View.initialize();
@@ -84,10 +84,10 @@ class NutritionLoggerView extends WatchUi.View {
 
     // Pre-compute hint text positions using trig values
     // COS(30°) ≈ 0.866, SIN(30°) = 0.5
-    mSignPlusMinusX = mSignRadius * (1.0 + 0.866025403784);
-    mSignPlusMinusY = mSignRadius * (1.0 - 0.5);
-    mSignMenuX = mSignRadius * (1.0 + 0.866025403784);
-    mSignMenuY = mSignRadius * (1.0 + 0.5) - 5;
+    mSignUpperRightX = mSignRadius * (1.0 + 0.866025403784);
+    mSignUpperRightY = mSignRadius * (1.0 - 0.5);
+    mSignLowerRightX = mSignRadius * (1.0 + 0.866025403784);
+    mSignLowerRightY = mSignRadius * (1.0 + 0.5) - 10;
   }
 
   // Called when this View is brought to the foreground. Restore
@@ -115,7 +115,7 @@ class NutritionLoggerView extends WatchUi.View {
     View.onUpdate(dc);
 
     var app = getApp();
-    var y = 10;
+    var y = 8;
     var isRec = app.mSession != null && app.mSession.isRecording();
     debugLog(isRec ? "Recording" : "Idle");
 
@@ -149,8 +149,8 @@ class NutritionLoggerView extends WatchUi.View {
     if (isRec) {
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
-        mSignPlusMinusX,
-        mSignPlusMinusY,
+        mSignUpperRightX,
+        mSignUpperRightY,
         Graphics.FONT_XTINY,
         "+",
         Graphics.TEXT_JUSTIFY_RIGHT
@@ -174,8 +174,8 @@ class NutritionLoggerView extends WatchUi.View {
       // Draw minus sign for decrement
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
-        mSignMenuX,
-        mSignMenuY,
+        mSignLowerRightX,
+        mSignLowerRightY,
         Graphics.FONT_XTINY,
         "-",
         Graphics.TEXT_JUSTIFY_RIGHT
@@ -200,16 +200,16 @@ class NutritionLoggerView extends WatchUi.View {
       );
 
       var arrowUp = [
-        [10, mScreenRadius + 8],
-        [18, mScreenRadius - 8],
-        [26, mScreenRadius + 8],
+        [10, mScreenRadius + 6],
+        [16, mScreenRadius - 6],
+        [22, mScreenRadius + 6],
       ];
       dc.fillPolygon(arrowUp);
 
       var arrowDown = [
-        [22, mScreenRadius + 50],
-        [30, mScreenRadius + 66],
-        [38, mScreenRadius + 50],
+        [24, mScreenRadius + 52],
+        [30, mScreenRadius + 64],
+        [36, mScreenRadius + 52],
       ];
       dc.fillPolygon(arrowDown);
     }
@@ -226,7 +226,7 @@ class NutritionLoggerView extends WatchUi.View {
       status,
       Graphics.TEXT_JUSTIFY_CENTER
     );
-    y += 25;
+    y += 18;
 
     dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
     var info = Activity.getActivityInfo();
@@ -269,7 +269,7 @@ class NutritionLoggerView extends WatchUi.View {
       distStr + " / " + altStr,
       Graphics.TEXT_JUSTIFY_CENTER
     );
-    y += 30;
+    y += 28;
     // Display Heart Rate and Temperature on one line
     var hrStr = mHeartRate != null ? mHeartRate.format("%.0f") : "--";
     var tempStr = mTemperature != null ? mTemperature.format("%.1f") + "°" : "--°";
@@ -281,7 +281,7 @@ class NutritionLoggerView extends WatchUi.View {
       vitalsStr,
       Graphics.TEXT_JUSTIFY_CENTER
     );
-    y += 40;
+    y += 34;
 
     // Custom variables section (using cached labels)
     // 5 items: RPE, Water, Electrolytes, Food, Menu
@@ -293,7 +293,7 @@ class NutritionLoggerView extends WatchUi.View {
       var line = "";
       var color = Graphics.COLOR_LT_GRAY;
       var font = Graphics.FONT_TINY;
-      var y_gap = i * 22;
+      var y_gap = i * 24;
       
       // Build display string based on item type
       if (i == app.MENU_FIELD) {
@@ -324,8 +324,8 @@ class NutritionLoggerView extends WatchUi.View {
       
       // Highlight selected item
       if (i == app.mSelectedIndex) {
-        y_gap = i * 22 - 3;
-        font = Graphics.FONT_MEDIUM;
+        y_gap = i * 24 - 3;
+        font = Graphics.FONT_SMALL;
         if (isRec) {
           if (i == app.RPE_FIELD) {
             color = getRPEColor(app.mRPE);
