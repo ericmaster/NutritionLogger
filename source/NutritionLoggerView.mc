@@ -132,7 +132,7 @@ class NutritionLoggerView extends WatchUi.View {
       mUpdateTimer.stop();
     }
 
-    // Start button hint (using cached values)
+    // Start button hint (always visible)
     var arcStart = 22; // degrees
     var arcEnd = 38; // degrees
     dc.setPenWidth(2);
@@ -145,23 +145,11 @@ class NutritionLoggerView extends WatchUi.View {
       arcEnd
     );
     
-    // Show button hint text near START button (Increment)
+    // Show button hint text near START and Back buttons (Increment/Decrement)
     if (isRec) {
-      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-      dc.drawText(
-        mSignUpperRightX,
-        mSignUpperRightY,
-        Graphics.FONT_XTINY,
-        "+",
-        Graphics.TEXT_JUSTIFY_RIGHT
-      );
-    }
-
-    // Back button hint (Decrement)
-    if (isRec) {
+      // Back button hint
       arcStart = 322; // degrees
       arcEnd = 338; // degrees
-      dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
       dc.drawArc(
         mScreenRadius,
         mScreenRadius,
@@ -170,9 +158,18 @@ class NutritionLoggerView extends WatchUi.View {
         arcStart,
         arcEnd
       );
+
+      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+      // Draw plus sign for increment
+      dc.drawText(
+        mSignUpperRightX,
+        mSignUpperRightY,
+        Graphics.FONT_XTINY,
+        "+",
+        Graphics.TEXT_JUSTIFY_RIGHT
+      );
       
       // Draw minus sign for decrement
-      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
         mSignLowerRightX,
         mSignLowerRightY,

@@ -3,10 +3,9 @@
 
     <string id="prompt">Click the menu button</string>
     <!-- Menu labels -->
-    <string id="menu_label_back">Back</string>
+    <string id="menu_label_return">Return</string>
     <string id="menu_label_save">Save</string>
     <string id="menu_label_discard">Discard</string>
-    <string id="menu_label_close">Close</string>
 
     <!-- Level labels -->
     <string id="rpe">RPE</string>

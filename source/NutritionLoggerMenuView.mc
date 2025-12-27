@@ -9,7 +9,11 @@ class NutritionLoggerMenuView extends WatchUi.View {
     function initialize(delegate as NutritionLoggerMenuDelegate) {
         View.initialize();
         mDelegate = delegate;
-        mMenuItems = ["Resume", "Save", "Discard"];
+        mMenuItems = [
+            WatchUi.loadResource(Rez.Strings.menu_label_return),
+            WatchUi.loadResource(Rez.Strings.menu_label_save),
+            WatchUi.loadResource(Rez.Strings.menu_label_discard)
+        ];
     }
 
     function onLayout(dc as Dc) as Void {
@@ -67,21 +71,21 @@ class NutritionLoggerMenuView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             centerX,
-            dc.getHeight() - 50,
+            dc.getHeight() - 60,
             Graphics.FONT_XTINY,
             "UP/DOWN = Navigate",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
             centerX,
-            dc.getHeight() - 35,
+            dc.getHeight() - 45,
             Graphics.FONT_XTINY,
             "START = Select",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
             centerX,
-            dc.getHeight() - 20,
+            dc.getHeight() - 30,
             Graphics.FONT_XTINY,
             "BACK = Return",
             Graphics.TEXT_JUSTIFY_CENTER
