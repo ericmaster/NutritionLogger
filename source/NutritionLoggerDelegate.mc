@@ -11,6 +11,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
   var mHoldTimer as Timer.Timer?;
   var mHoldTriggered as Boolean = false;
   var mIgnoreNextRelease as Boolean = false;
+  var mKeyProcessing as Boolean = false; // flag to prevent double key processing
 
   function initialize() {
     BehaviorDelegate.initialize();
@@ -81,6 +82,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       if (mIgnoreNextRelease) {
         mIgnoreNextRelease = false;
         mLastKeyDownAt = null;
+        mKeyProcessing = false; // Reset processing flag
         return true;
       }
 
@@ -92,6 +94,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       // Reset state
       mHoldTriggered = false;
       mLastKeyDownAt = null;
+      mKeyProcessing = false; // Reset processing flag
       return true;
     }
     return false;
@@ -198,6 +201,12 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     }
     // If running, we let onKeyReleased handle the Short/Long press logic
     if (app.mSession.isRecording()) {
+      // Prevent re-entry if we're already processing this key press
+      if (mKeyProcessing) {
+        return true;
+      }
+      
+      mKeyProcessing = true;
       mLastKeyDownAt = Sys.getTimer();
       mHoldTriggered = false;
       mHoldTimer = new Timer.Timer();

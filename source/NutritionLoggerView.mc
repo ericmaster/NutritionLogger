@@ -8,13 +8,8 @@ using Toybox.Sensor as Sensor;
 using Toybox.Math;
 
 class NutritionLoggerView extends WatchUi.View {
-  // Pre-computed trig values for 30 degrees (static, never changes)
-  const COS_30 = 0.866025403784; // Math.cos(Math.toRadians(30))
-  const SIN_30 = 0.5;            // Math.sin(Math.toRadians(30))
-
   var mUpdateTimer as Timer.Timer?;
   var mHeartRate; // current heart rate (bpm)
-  var mPulseOx; // blood oxygen saturation (%)
   var mTemperature; // temperature (Celsius)
 
   // Cached string resources (loaded once in onLayout)
@@ -37,10 +32,10 @@ class NutritionLoggerView extends WatchUi.View {
   var mScreenRadius as Number?;
   var mArcRadius as Number?;
   var mSignRadius as Number?;
-  var mSignPlusX as Float?;
-  var mSignPlusY as Float?;
-  var mSignMinusX as Float?;
-  var mSignMinusY as Float?;
+  var mSignPlusMinusX as Float?;
+  var mSignPlusMinusY as Float?;
+  var mSignMenuX as Float?;
+  var mSignMenuY as Float?;
 
   function initialize() {
     View.initialize();
@@ -87,11 +82,12 @@ class NutritionLoggerView extends WatchUi.View {
     mArcRadius = mScreenRadius - 6;
     mSignRadius = mScreenRadius - 4;
 
-    // Pre-compute +/- sign positions using cached trig values
-    mSignPlusX = mSignRadius * (1.0 + COS_30);
-    mSignPlusY = mSignRadius * (1.0 - SIN_30) + 10;
-    mSignMinusX = mSignRadius * (1.0 + COS_30);
-    mSignMinusY = mSignRadius * (1.0 + SIN_30) - 2;
+    // Pre-compute hint text positions using trig values
+    // COS(30°) ≈ 0.866, SIN(30°) = 0.5
+    mSignPlusMinusX = mSignRadius * (1.0 + 0.866025403784);
+    mSignPlusMinusY = mSignRadius * (1.0 - 0.5);
+    mSignMenuX = mSignRadius * (1.0 + 0.866025403784);
+    mSignMenuY = mSignRadius * (1.0 + 0.5) - 5;
   }
 
   // Called when this View is brought to the foreground. Restore
@@ -108,7 +104,6 @@ class NutritionLoggerView extends WatchUi.View {
     // Requires Sensor permission (declared in manifest)
     Sensor.setEnabledSensors([
       Sensor.SENSOR_HEARTRATE,
-      Sensor.SENSOR_PULSE_OXIMETRY,
       Sensor.SENSOR_TEMPERATURE
     ]);
     Sensor.enableSensorEvents(method(:onSensor));
@@ -150,14 +145,14 @@ class NutritionLoggerView extends WatchUi.View {
       arcEnd
     );
     
-    // Show button hint text near START button (Add)
+    // Show button hint text near START button (Add/Subtract)
     if (isRec) {
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
-        mScreenRadius + mArcRadius - 30,
-        15,
+        mSignPlusMinusX,
+        mSignPlusMinusY,
         Graphics.FONT_XTINY,
-        "+1",
+        "+/-",
         Graphics.TEXT_JUSTIFY_RIGHT
       );
     }
@@ -176,15 +171,20 @@ class NutritionLoggerView extends WatchUi.View {
         arcEnd
       );
       
-      // Show button hint text near BACK button
+      // Draw hamburger menu icon (three horizontal lines)
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-      dc.drawText(
-        mScreenRadius + mArcRadius - 30,
-        dc.getHeight() - 15,
-        Graphics.FONT_XTINY,
-        "MENU",
-        Graphics.TEXT_JUSTIFY_RIGHT
-      );
+      dc.setPenWidth(2);
+      
+      var menuIconWidth = 12;
+      var menuIconX = mSignMenuX - menuIconWidth;
+      var menuIconY = mSignMenuY;
+      
+      // Top line
+      dc.drawLine(menuIconX, menuIconY - 4, menuIconX + menuIconWidth, menuIconY - 4);
+      // Middle line
+      dc.drawLine(menuIconX, menuIconY, menuIconX + menuIconWidth, menuIconY);
+      // Bottom line
+      dc.drawLine(menuIconX, menuIconY + 4, menuIconX + menuIconWidth, menuIconY + 4);
 
       dc.drawArc(
         mScreenRadius,
@@ -219,25 +219,6 @@ class NutritionLoggerView extends WatchUi.View {
       dc.fillPolygon(arrowDown);
     }
 
-    // Always draw signs (no pause selection anymore)
-    if (isRec) {
-      // Use pre-computed positions for +/- signs
-      dc.drawText(
-        mSignPlusX,
-        mSignPlusY,
-        Graphics.FONT_SYSTEM_LARGE,
-        "+",
-        Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
-      );
-
-      dc.drawText(
-        mSignMinusX,
-        mSignMinusY,
-        Graphics.FONT_SYSTEM_LARGE,
-        "-",
-        Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER
-      );
-    }
 
     var status = isRec ? mStrRecording : mStrIdle;
     if (isRec) {
@@ -294,11 +275,10 @@ class NutritionLoggerView extends WatchUi.View {
       Graphics.TEXT_JUSTIFY_CENTER
     );
     y += 30;
-    // Display Heart Rate, SpO2, and Temperature on one line
+    // Display Heart Rate and Temperature on one line
     var hrStr = mHeartRate != null ? mHeartRate.format("%.0f") : "--";
-    var spo2Str = mPulseOx != null ? mPulseOx.format("%.0f") + "%" : "--%";
     var tempStr = mTemperature != null ? mTemperature.format("%.1f") + "°" : "--°";
-    var vitalsStr = hrStr + " bpm | " + spo2Str + " | " + tempStr;
+    var vitalsStr = hrStr + " bpm | " + tempStr;
     dc.drawText(
       dc.getWidth() / 2,
       y,
@@ -384,7 +364,6 @@ class NutritionLoggerView extends WatchUi.View {
     Sensor.enableSensorEvents(null);
     Sensor.setEnabledSensors([]);
     mHeartRate = null;
-    mPulseOx = null;
     mTemperature = null;
   }
 
@@ -402,11 +381,7 @@ class NutritionLoggerView extends WatchUi.View {
       needsUpdate = true;
     }
 
-    // Pulse oximetry (SpO2)
-    if (info has :oxygenSaturation && info.oxygenSaturation != null) {
-      mPulseOx = info.oxygenSaturation;
-      needsUpdate = true;
-    }
+
 
     // Temperature
     if (info has :temperature && info.temperature != null) {

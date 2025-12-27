@@ -305,7 +305,6 @@ These fields are written to **RECORD** messages, meaning they're timestamped wit
 
 ### Enabled Sensors:
 - **Heart Rate**: Displayed on main screen
-- **Pulse Oximetry (SpO2)**: Displayed on main screen
 - **Temperature**: Displayed on main screen
 - **Accelerometer**: Logged via SensorLogger
 - **Gyroscope**: Logged via SensorLogger
