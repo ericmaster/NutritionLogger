@@ -49,11 +49,6 @@ class NutritionLoggerMenuDelegate extends WatchUi.BehaviorDelegate {
         // Resume
         debugLog("Resume");
         
-        // Set flag to ignore next START button release to prevent unintended increment
-        if (app.mDelegate != null) {
-          app.mDelegate.mIgnoreNextRelease = true;
-        }
-        
         WatchUi.popView(WatchUi.SLIDE_DOWN);
         
         // If somehow we were paused (legacy), start again

@@ -11,11 +11,12 @@ using Toybox.FitContributor as Fit;
 
 class NutritionLoggerApp extends Application.AppBase {
   // Developer Fields Constants  
-  // Selection indices: 0=RPE, 1=Water, 2=Electrolytes, 3=Food
+  // Selection indices: 0=RPE, 1=Water, 2=Electrolytes, 3=Food, 4=Menu
   const RPE_FIELD = 0;
   const WATER_FIELD = 1;
   const ELECTROLYTES_FIELD = 2;
   const FOOD_FIELD = 3;
+  const MENU_FIELD = 4;
 
   // Global session reference
   var mSession as AR.Session?;
@@ -28,7 +29,7 @@ class NutritionLoggerApp extends Application.AppBase {
   // Counters and selection
   var mRPE as Number = 1; // Should start at 1 (RPE 3-4)
   var mCounters as Array<Number> = [0, 0, 0]; // [water, electrolytes, food]
-  var mSelectedIndex as Number = 0; // 0=RPE, 1=Water, 2=Electrolytes, 3=Food (default to RPE)
+  var mSelectedIndex as Number = 0; // 0=RPE, 1=Water, 2=Electrolytes, 3=Food, 4=Menu (default to RPE)
 
   var logger as SensorLogging.SensorLogger?;
   var mDelegate as NutritionLoggerDelegate?;

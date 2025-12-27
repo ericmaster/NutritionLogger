@@ -145,19 +145,19 @@ class NutritionLoggerView extends WatchUi.View {
       arcEnd
     );
     
-    // Show button hint text near START button (Add/Subtract)
+    // Show button hint text near START button (Increment)
     if (isRec) {
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
       dc.drawText(
         mSignPlusMinusX,
         mSignPlusMinusY,
         Graphics.FONT_XTINY,
-        "+/-",
+        "+",
         Graphics.TEXT_JUSTIFY_RIGHT
       );
     }
 
-    // Back button hint (Menu)
+    // Back button hint (Decrement)
     if (isRec) {
       arcStart = 322; // degrees
       arcEnd = 338; // degrees
@@ -171,20 +171,15 @@ class NutritionLoggerView extends WatchUi.View {
         arcEnd
       );
       
-      // Draw hamburger menu icon (three horizontal lines)
+      // Draw minus sign for decrement
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-      dc.setPenWidth(2);
-      
-      var menuIconWidth = 12;
-      var menuIconX = mSignMenuX - menuIconWidth;
-      var menuIconY = mSignMenuY;
-      
-      // Top line
-      dc.drawLine(menuIconX, menuIconY - 4, menuIconX + menuIconWidth, menuIconY - 4);
-      // Middle line
-      dc.drawLine(menuIconX, menuIconY, menuIconX + menuIconWidth, menuIconY);
-      // Bottom line
-      dc.drawLine(menuIconX, menuIconY + 4, menuIconX + menuIconWidth, menuIconY + 4);
+      dc.drawText(
+        mSignMenuX,
+        mSignMenuY,
+        Graphics.FONT_XTINY,
+        "-",
+        Graphics.TEXT_JUSTIFY_RIGHT
+      );
 
       dc.drawArc(
         mScreenRadius,
@@ -289,11 +284,11 @@ class NutritionLoggerView extends WatchUi.View {
     y += 40;
 
     // Custom variables section (using cached labels)
-    // 4 items: RPE, Water, Electrolytes, Food
-    var labels = [mStrRPE, mStrWater, mStrElectrolytes, mStrFood];
+    // 5 items: RPE, Water, Electrolytes, Food, Menu
+    var labels = [mStrRPE, mStrWater, mStrElectrolytes, mStrFood, "MENU"];
     var i = 0;
     var x_center = dc.getWidth() / 2;
-    while (i < 4) {
+    while (i < 5) {
       var name = labels[i];
       var line = "";
       var color = Graphics.COLOR_LT_GRAY;
@@ -301,7 +296,10 @@ class NutritionLoggerView extends WatchUi.View {
       var y_gap = i * 22;
       
       // Build display string based on item type
-      if (i == app.RPE_FIELD) {
+      if (i == app.MENU_FIELD) {
+        // Menu state - show menu indicator
+        line = ">>> " + name + " <<<";
+      } else if (i == app.RPE_FIELD) {
         // RPE with range and difficulty label
         var rpeRange = (app.mRPE * 2 + 1).toString() + "-" + (app.mRPE * 2 + 2).toString();
         var rpeDifficulty = "";

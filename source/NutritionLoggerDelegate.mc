@@ -7,22 +7,13 @@ using Toybox.Attention as Attention;
 using Toybox.Timer;
 
 class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
-  var mLastKeyDownAt as Number?; // for measuring press duration
-  var mHoldTimer as Timer.Timer?;
-  var mHoldTriggered as Boolean = false;
-  var mIgnoreNextRelease as Boolean = false;
-  var mKeyProcessing as Boolean = false; // flag to prevent double key processing
-
   function initialize() {
     BehaviorDelegate.initialize();
   }
 
   function onMenu() as Boolean {
-    // Treat Menu like UP to cycle selection
-    var app = getApp();
-    app.mSelectedIndex = (app.mSelectedIndex + 2) % 3;
-    WatchUi.requestUpdate();
-    return true;
+    // Menu button can be used for alternate navigation if needed
+    return false;
   }
 
   function onKey(keyEvent as KeyEvent) as Boolean {
@@ -41,8 +32,8 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
 
     if (session != null && session.isRecording()){
       if (key == WatchUi.KEY_UP || key == WatchUi.KEY_MENU) {
-        // Cycle up: 0->3->2->1->0
-        app.mSelectedIndex = (app.mSelectedIndex + 3) % 4;
+        // Cycle up: 4->3->2->1->0->4 (5 states including Menu)
+        app.mSelectedIndex = (app.mSelectedIndex + 4) % 5;
         // Play selection tone
         if (Attention has :playTone) {
           Attention.playTone(Attention.TONE_KEY);
@@ -50,8 +41,8 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
         WatchUi.requestUpdate();
         return true;
       } else if (key == WatchUi.KEY_DOWN) {
-        // Cycle down: 0->1->2->3->0
-        app.mSelectedIndex = (app.mSelectedIndex + 1) % 4;
+        // Cycle down: 0->1->2->3->4->0 (5 states including Menu)
+        app.mSelectedIndex = (app.mSelectedIndex + 1) % 5;
         // Play selection tone
         if (Attention has :playTone) {
           Attention.playTone(Attention.TONE_KEY);
@@ -67,52 +58,16 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
 
 
 
-  // Handle key release for short vs long press
-  function onKeyReleased(evt as KeyEvent) as Boolean {
-    var app = getApp();
-    if (app.mSession != null && app.mSession.isRecording() && evt.getKey() == WatchUi.KEY_ENTER) {
-      
-      // Stop hold timer if it's running
-      if (mHoldTimer != null) {
-        mHoldTimer.stop();
-        mHoldTimer = null;
-      }
 
-      // Check if we should ignore this release (e.g. just started session)
-      if (mIgnoreNextRelease) {
-        mIgnoreNextRelease = false;
-        mLastKeyDownAt = null;
-        mKeyProcessing = false; // Reset processing flag
-        return true;
-      }
-
-      // If hold logic didn't trigger (Short Press), then Increment
-      if (!mHoldTriggered) {
-        incrementCounter(app);
-      }
-      
-      // Reset state
-      mHoldTriggered = false;
-      mLastKeyDownAt = null;
-      mKeyProcessing = false; // Reset processing flag
-      return true;
-    }
-    return false;
-  }
-
-  // Timer callback for Long Press (Hold)
-  function onHoldTimer() as Void {
-    var app = getApp();
-    // Only if session is still recording
-    if (app.mSession != null && app.mSession.isRecording()) {
-        mHoldTriggered = true;
-        decrementCounter(app); // Execute undo immediately
-        debugLog("Hold Action Triggered (Decrement)");
-    }
-  }
 
   function incrementCounter(app as NutritionLoggerApp) as Boolean {
       var idx = app.mSelectedIndex;
+      
+      // If MENU_FIELD is selected, ignore increment (menu doesn't have a value)
+      if (idx == app.MENU_FIELD) {
+        return false;
+      }
+      
       if (idx == app.RPE_FIELD) {
         // Increase RPE (0 - 4)
         app.mRPE = app.mRPE + 1 < 4 ? app.mRPE + 1 : 4;
@@ -139,6 +94,12 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
 
   function decrementCounter(app as NutritionLoggerApp) as Boolean {
       var idx = app.mSelectedIndex;
+      
+      // If MENU_FIELD is selected, ignore decrement (menu doesn't have a value)
+      if (idx == app.MENU_FIELD) {
+        return false;
+      }
+      
       if (idx == app.RPE_FIELD) {
         // Decrease RPE (0 - 4)
         app.mRPE = app.mRPE - 1 <= 0 ? 0 : app.mRPE - 1;
@@ -191,26 +152,31 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
         if (Attention has :playTone) {
           Attention.playTone(Attention.TONE_START);
         }
-        mIgnoreNextRelease = true;
       } catch (e) {
         debugLog("Failed to start session: " + e);
-        mIgnoreNextRelease = false;
       }
       WatchUi.requestUpdate();
       return true;
     }
-    // If running, we let onKeyReleased handle the Short/Long press logic
+    
+    // If recording: START button increments (or opens menu if on MENU_FIELD)
     if (app.mSession.isRecording()) {
-      // Prevent re-entry if we're already processing this key press
-      if (mKeyProcessing) {
+      // If MENU_FIELD is selected, open the session menu
+      if (app.mSelectedIndex == app.MENU_FIELD) {
+        debugLog("Opening Menu from MENU_FIELD state");
+        var menuDelegate = new NutritionLoggerMenuDelegate(true);
+        var menuView = new NutritionLoggerMenuView(menuDelegate);
+        WatchUi.pushView(
+          menuView,
+          menuDelegate,
+          WatchUi.SLIDE_UP
+        );
+        WatchUi.requestUpdate();
         return true;
       }
       
-      mKeyProcessing = true;
-      mLastKeyDownAt = Sys.getTimer();
-      mHoldTriggered = false;
-      mHoldTimer = new Timer.Timer();
-      mHoldTimer.start(method(:onHoldTimer), 1000, false);
+      // Otherwise increment the selected counter
+      incrementCounter(app);
       return true;
     }
 
@@ -222,17 +188,15 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     var session = app.mSession;
 
     if (session != null && session.isRecording()) {
-        debugLog("Opening Menu (background recording)");
-        // Push custom menu view WITH delegate we can access
-        var menuDelegate = new NutritionLoggerMenuDelegate(true);
-        var menuView = new NutritionLoggerMenuView(menuDelegate);
-        WatchUi.pushView(
-          menuView,
-          menuDelegate,
-          WatchUi.SLIDE_UP
-        );
-        WatchUi.requestUpdate();
+      // BACK button now decrements the selected field (unless on MENU_FIELD)
+      if (app.mSelectedIndex == app.MENU_FIELD) {
+        // If on Menu state, BACK does nothing (or could cycle away from menu)
         return true;
+      }
+      
+      // Decrement the selected counter
+      decrementCounter(app);
+      return true;
     }
     return false;
   }
