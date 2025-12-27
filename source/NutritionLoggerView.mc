@@ -145,38 +145,57 @@ class NutritionLoggerView extends WatchUi.View {
       arcEnd
     );
     
-    // Show button hint text near START and Back buttons (Increment/Decrement)
+    // Show button hint text near START and Back buttons (Increment/Decrement or Menu)
     if (isRec) {
-      // Back button hint
-      arcStart = 322; // degrees
-      arcEnd = 338; // degrees
-      dc.drawArc(
-        mScreenRadius,
-        mScreenRadius,
-        mArcRadius,
-        Graphics.ARC_COUNTER_CLOCKWISE,
-        arcStart,
-        arcEnd
-      );
+      var isMenuSelected = app.mSelectedIndex == app.MENU_FIELD;
+      
+      // Back button hint (only show when not on MENU)
+      if (!isMenuSelected) {
+        arcStart = 322; // degrees
+        arcEnd = 338; // degrees
+        dc.drawArc(
+          mScreenRadius,
+          mScreenRadius,
+          mArcRadius,
+          Graphics.ARC_COUNTER_CLOCKWISE,
+          arcStart,
+          arcEnd
+        );
+      }
 
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-      // Draw plus sign for increment
-      dc.drawText(
-        mSignUpperRightX,
-        mSignUpperRightY,
-        Graphics.FONT_XTINY,
-        "+",
-        Graphics.TEXT_JUSTIFY_RIGHT
-      );
       
-      // Draw minus sign for decrement
-      dc.drawText(
-        mSignLowerRightX,
-        mSignLowerRightY,
-        Graphics.FONT_XTINY,
-        "-",
-        Graphics.TEXT_JUSTIFY_RIGHT
-      );
+      if (isMenuSelected) {
+        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        // Draw hamburger menu icon for START button when MENU is selected
+        dc.setPenWidth(2);
+        var menuIconWidth = 12;
+        var menuIconX = mSignUpperRightX - menuIconWidth;
+        var menuIconY = mSignUpperRightY + 10;
+        
+        // Three horizontal lines
+        dc.drawLine(menuIconX, menuIconY - 3, menuIconX + menuIconWidth, menuIconY - 3);
+        dc.drawLine(menuIconX, menuIconY, menuIconX + menuIconWidth, menuIconY);
+        dc.drawLine(menuIconX, menuIconY + 3, menuIconX + menuIconWidth, menuIconY + 3);
+      } else {
+        // Draw plus sign for increment (data fields)
+        dc.drawText(
+          mSignUpperRightX,
+          mSignUpperRightY,
+          Graphics.FONT_XTINY,
+          "+",
+          Graphics.TEXT_JUSTIFY_RIGHT
+        );
+        
+        // Draw minus sign for decrement
+        dc.drawText(
+          mSignLowerRightX,
+          mSignLowerRightY,
+          Graphics.FONT_XTINY,
+          "-",
+          Graphics.TEXT_JUSTIFY_RIGHT
+        );
+      }
 
       dc.drawArc(
         mScreenRadius,
