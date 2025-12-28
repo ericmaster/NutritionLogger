@@ -26,11 +26,23 @@ On app start/initialization:
 - **Back/Lap**: Closes App
 
 During activity recording:
-- **Start (Short Press)**: **Add (+1)** to selected item / Increase RPE
-- **Start (Long Press > 1s)**: **Undo (-1)** from selected item / Decrease RPE (Triggers immediately on hold)
-- **Back**: Open Menu (Resume/Save/Discard) - *Recording continues in background*
-- **Up / Down**: Cycle through data fields (RPE, Water, Electrolytes, Food)
+- **Start**: **Add (+1)** to selected item / Increase RPE. When on MENU state, opens Session Menu.
+- **Back**: **Undo (-1)** from selected item / Decrease RPE (Cannot decrement when on MENU state)
+- **Up / Down**: Cycle through data fields (RPE, Water, Electrolytes, Food, **MENU**)
 - **Light**: System Default (Backlight)
+
+### Session Menu
+
+When you cycle to the **MENU** state (via Up/Down) and press **Start**, a Session Menu opens:
+- **Resume**: Return to activity recording
+- **Save**: Confirm and save the activity, then exit
+- **Discard**: Confirm and discard the activity, then exit
+
+In the menu:
+- **Up / Down**: Navigate menu items
+- **Start**: Select current item
+- **Back**: Return to activity without selecting
+
 
 ## Development Setup
 
