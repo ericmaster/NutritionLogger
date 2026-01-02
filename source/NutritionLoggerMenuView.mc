@@ -10,7 +10,6 @@ class NutritionLoggerMenuView extends WatchUi.View {
         View.initialize();
         mDelegate = delegate;
         mMenuItems = [
-            WatchUi.loadResource(Rez.Strings.menu_label_return),
             WatchUi.loadResource(Rez.Strings.menu_label_save),
             WatchUi.loadResource(Rez.Strings.menu_label_discard),
             WatchUi.loadResource(Rez.Strings.menu_label_settings)
@@ -88,7 +87,7 @@ class NutritionLoggerMenuView extends WatchUi.View {
             centerX,
             dc.getHeight() - 30,
             Graphics.FONT_XTINY,
-            "BACK = Return",
+            "MENU = Return",
             Graphics.TEXT_JUSTIFY_CENTER
         );
     }
