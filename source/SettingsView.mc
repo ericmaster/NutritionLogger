@@ -2,23 +2,22 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-class NutritionLoggerMenuView extends WatchUi.View {
-    private var mDelegate as NutritionLoggerMenuDelegate;
-    private var mMenuItems as Array<String>;
+class SettingsView extends WatchUi.View {
+    private var mDelegate as SettingsDelegate;
+    private var mLabels as Array<String>;
 
-    function initialize(delegate as NutritionLoggerMenuDelegate) {
+    function initialize(delegate as SettingsDelegate) {
         View.initialize();
         mDelegate = delegate;
-        mMenuItems = [
-            WatchUi.loadResource(Rez.Strings.menu_label_return),
-            WatchUi.loadResource(Rez.Strings.menu_label_save),
-            WatchUi.loadResource(Rez.Strings.menu_label_discard),
-            WatchUi.loadResource(Rez.Strings.menu_label_settings)
+        mLabels = [
+            WatchUi.loadResource(Rez.Strings.settings_water_unit),
+            WatchUi.loadResource(Rez.Strings.settings_electrolytes_unit),
+            WatchUi.loadResource(Rez.Strings.settings_food_unit)
         ];
     }
 
     function onLayout(dc as Dc) as Void {
-        // Don't use layout resource since we're drawing everything custom
+        // Custom drawing, no layout resource needed
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -26,6 +25,7 @@ class NutritionLoggerMenuView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
 
+        var app = getApp();
         var centerX = dc.getWidth() / 2;
         var startY = dc.getHeight() / 2 - 60;
         
@@ -35,16 +35,23 @@ class NutritionLoggerMenuView extends WatchUi.View {
             centerX,
             30,
             Graphics.FONT_MEDIUM,
-            "Session Menu",
+            WatchUi.loadResource(Rez.Strings.settings_title),
             Graphics.TEXT_JUSTIFY_CENTER
         );
 
-        // Draw menu items
+        // Values to display
+        var values = [
+            app.mWaterUnit.format("%.0f") + "ml",
+            app.mElectrolytesUnit.format("%.0f") + "mg",
+            app.mFoodUnit.format("%.0f") + "kcal"
+        ];
+
         var selectedIdx = mDelegate.getSelectedItem();
         
-        for (var i = 0; i < mMenuItems.size(); i++) {
+        // Draw settings items
+        for (var i = 0; i < 3; i++) {
             var isSelected = (i == selectedIdx);
-            var yPos = startY + (i * 35);
+            var yPos = startY + (i * 40);
             
             if (isSelected) {
                 // Highlight selected item
@@ -53,7 +60,7 @@ class NutritionLoggerMenuView extends WatchUi.View {
                     centerX,
                     yPos,
                     Graphics.FONT_MEDIUM,
-                    "> " + mMenuItems[i] + " <",
+                    "> " + mLabels[i] + ": " + values[i] + " <",
                     Graphics.TEXT_JUSTIFY_CENTER
                 );
             } else {
@@ -62,7 +69,7 @@ class NutritionLoggerMenuView extends WatchUi.View {
                     centerX,
                     yPos,
                     Graphics.FONT_SMALL,
-                    mMenuItems[i],
+                    mLabels[i] + ": " + values[i],
                     Graphics.TEXT_JUSTIFY_CENTER
                 );
             }
@@ -74,21 +81,21 @@ class NutritionLoggerMenuView extends WatchUi.View {
             centerX,
             dc.getHeight() - 60,
             Graphics.FONT_XTINY,
-            "UP/DOWN = Navigate",
+            "UP/DOWN = Select",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
             centerX,
             dc.getHeight() - 45,
             Graphics.FONT_XTINY,
-            "START = Select",
+            "START = +10 / BACK = -10",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
             centerX,
             dc.getHeight() - 30,
             Graphics.FONT_XTINY,
-            "BACK = Return",
+            "MENU = Save & Exit",
             Graphics.TEXT_JUSTIFY_CENTER
         );
     }

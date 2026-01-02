@@ -1,4 +1,5 @@
 import Toybox.Application;
+import Toybox.Application.Storage;
 import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Position;
@@ -18,6 +19,21 @@ class NutritionLoggerApp extends Application.AppBase {
   const FOOD_FIELD = 3;
   const MENU_FIELD = 4;
 
+  // Settings storage keys
+  const STORAGE_WATER_UNIT = "water_unit_ml";
+  const STORAGE_ELECTROLYTES_UNIT = "electrolytes_unit_mg";
+  const STORAGE_FOOD_UNIT = "food_unit_kcal";
+
+  // Default unit values
+  const DEFAULT_WATER_UNIT = 100;        // 100ml per count
+  const DEFAULT_ELECTROLYTES_UNIT = 100; // 100mg per count
+  const DEFAULT_FOOD_UNIT = 100;         // 100kcal per count
+
+  // Current unit values (loaded from storage)
+  var mWaterUnit as Number = 100;
+  var mElectrolytesUnit as Number = 100;
+  var mFoodUnit as Number = 100;
+
   // Global session reference
   var mSession as AR.Session?;
   // Developer data fields
@@ -36,6 +52,7 @@ class NutritionLoggerApp extends Application.AppBase {
 
   function initialize() {
     AppBase.initialize();
+    loadSettings();
   }
 
   // onStart() is called on application start up
@@ -133,6 +150,37 @@ class NutritionLoggerApp extends Application.AppBase {
 
   function onPosition(info as Position.Info) as Void {
     // debugLog("Position: " + info.latitude + ", " + info.longitude);
+  }
+
+  // Load settings from storage
+  function loadSettings() as Void {
+    var water = Storage.getValue(STORAGE_WATER_UNIT);
+    var electrolytes = Storage.getValue(STORAGE_ELECTROLYTES_UNIT);
+    var food = Storage.getValue(STORAGE_FOOD_UNIT);
+    
+    mWaterUnit = (water != null) ? water as Number : DEFAULT_WATER_UNIT;
+    mElectrolytesUnit = (electrolytes != null) ? electrolytes as Number : DEFAULT_ELECTROLYTES_UNIT;
+    mFoodUnit = (food != null) ? food as Number : DEFAULT_FOOD_UNIT;
+  }
+
+  // Save settings to storage
+  function saveSettings() as Void {
+    Storage.setValue(STORAGE_WATER_UNIT, mWaterUnit);
+    Storage.setValue(STORAGE_ELECTROLYTES_UNIT, mElectrolytesUnit);
+    Storage.setValue(STORAGE_FOOD_UNIT, mFoodUnit);
+  }
+
+  // Get computed intake values (count * unit)
+  function getWaterIntake() as Number {
+    return mCounters[0] * mWaterUnit;
+  }
+
+  function getElectrolytesIntake() as Number {
+    return mCounters[1] * mElectrolytesUnit;
+  }
+
+  function getFoodIntake() as Number {
+    return mCounters[2] * mFoodUnit;
   }
 }
 

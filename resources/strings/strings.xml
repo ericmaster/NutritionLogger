@@ -24,4 +24,11 @@
     <string id="counter_food">Food</string>
     <string id="status_recording">Recording</string>
     <string id="status_idle">Idle</string>
+
+    <!-- Settings labels -->
+    <string id="settings_title">Settings</string>
+    <string id="settings_water_unit">Water</string>
+    <string id="settings_electrolytes_unit">Electrolytes</string>
+    <string id="settings_food_unit">Food</string>
+    <string id="menu_label_settings">Settings</string>
 </strings>

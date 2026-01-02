@@ -53,6 +53,13 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       // Do nothing if key is not handled
       return false;
     }
+    
+    // When idle (no session), UP or DOWN opens settings
+    if (session == null && (key == WatchUi.KEY_UP || key == WatchUi.KEY_DOWN || key == WatchUi.KEY_MENU)) {
+      openSettings();
+      return true;
+    }
+    
     return false;
   }
 
@@ -134,28 +141,8 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
   function onStartKey() as Boolean {
     var app = getApp();
     if (app.mSession == null) {
-      // Start new session
-      debugLog("Starting new session");
-      try {
-        app.initSensorLogger();
-        app.mSession = AR.createSession({
-          :name => "Trail Run",
-          :sport => Activity.SPORT_RUNNING,
-          :subSport => Activity.SUB_SPORT_TRAIL,
-          :sensorLogger => app.logger,
-        });
-        app.resetCounters();
-        app.mSelectedIndex = app.RPE_FIELD; 
-        app.initFitFields();
-        app.mSession.setTimerEventListener(method(:onTimerEvent));
-        app.mSession.start();
-        if (Attention has :playTone) {
-          Attention.playTone(Attention.TONE_START);
-        }
-      } catch (e) {
-        debugLog("Failed to start session: " + e);
-      }
-      WatchUi.requestUpdate();
+      // In idle state, START begins a new session
+      startSession();
       return true;
     }
     
@@ -181,6 +168,41 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     }
 
     return false;
+  }
+
+  function openSettings() as Void {
+    debugLog("Opening Settings");
+    var settingsDelegate = new SettingsDelegate();
+    var settingsView = new SettingsView(settingsDelegate);
+    WatchUi.pushView(
+      settingsView,
+      settingsDelegate,
+      WatchUi.SLIDE_UP
+    );
+  }
+
+  function startSession() as Void {
+    var app = getApp();
+    debugLog("Starting new session");
+    try {
+      app.initSensorLogger();
+      app.mSession = AR.createSession({
+        :name => "Trail Run",
+        :sport => Activity.SPORT_RUNNING,
+        :subSport => Activity.SUB_SPORT_TRAIL,
+        :sensorLogger => app.logger,
+      });
+      app.resetCounters();
+      app.mSelectedIndex = app.RPE_FIELD; 
+      app.initFitFields();
+      app.mSession.setTimerEventListener(method(:onTimerEvent));
+      app.mSession.start();
+      if (Attention has :playTone) {
+        Attention.playTone(Attention.TONE_START);
+      }
+    } catch (e) {
+      debugLog("Failed to start session: " + e);
+    }
   }
 
   function onBackKey() as Boolean {

@@ -6,7 +6,7 @@ using Toybox.System as Sys;
 
 class NutritionLoggerMenuDelegate extends WatchUi.BehaviorDelegate {
   var mPostStop as Boolean;
-  var mSelectedItem as Number = 0; // 0 = Resume, 1 = Save, 2 = Discard
+  var mSelectedItem as Number = 0; // 0 = Resume, 1 = Save, 2 = Discard, 3 = Settings
 
   function initialize(postStop as Boolean?) {
     BehaviorDelegate.initialize();
@@ -18,13 +18,13 @@ class NutritionLoggerMenuDelegate extends WatchUi.BehaviorDelegate {
     var key = keyEvent.getKey();
 
     if (key == WatchUi.KEY_UP) {
-      // Move selection up
-      mSelectedItem = (mSelectedItem - 1 + 3) % 3;
+      // Move selection up (4 items)
+      mSelectedItem = (mSelectedItem - 1 + 4) % 4;
       WatchUi.requestUpdate();
       return true;
     } else if (key == WatchUi.KEY_DOWN) {
-      // Move selection down
-      mSelectedItem = (mSelectedItem + 1) % 3;
+      // Move selection down (4 items)
+      mSelectedItem = (mSelectedItem + 1) % 4;
       WatchUi.requestUpdate();
       return true;
     } else if (key == WatchUi.KEY_ENTER) {
@@ -68,6 +68,12 @@ class NutritionLoggerMenuDelegate extends WatchUi.BehaviorDelegate {
         var confirmView = new ConfirmationView("Discard Session?", :discard);
         var confirmDelegate = new ConfirmationDelegate(:discard);
         WatchUi.pushView(confirmView, confirmDelegate, WatchUi.SLIDE_UP);
+      } else if (mSelectedItem == 3) {
+        // Settings - open settings view
+        debugLog("Opening Settings from menu");
+        var settingsDelegate = new SettingsDelegate();
+        var settingsView = new SettingsView(settingsDelegate);
+        WatchUi.pushView(settingsView, settingsDelegate, WatchUi.SLIDE_UP);
       }
     }
   }

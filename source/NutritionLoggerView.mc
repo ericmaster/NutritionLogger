@@ -144,6 +144,38 @@ class NutritionLoggerView extends WatchUi.View {
       arcStart,
       arcEnd
     );
+
+    // When idle (not recording), show gear icon hint near UP button for settings
+    if (!isRec) {
+      dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+      dc.setPenWidth(2);
+      
+      // Draw arc near UP button (left side, same position as during recording)
+      dc.drawArc(
+        mScreenRadius,
+        mScreenRadius,
+        mArcRadius,
+        Graphics.ARC_COUNTER_CLOCKWISE,
+        172,
+        188
+      );
+      
+      // Draw gear icon next to UP button arc
+      // Position gear icon at the center of the arc (180 degrees = left side)
+      var gearX = 20;
+      var gearY = mScreenRadius;
+      var gearRadius = 5;
+      
+      // Draw gear wheel (circle with notches)
+      dc.drawCircle(gearX, gearY, gearRadius);
+      dc.fillCircle(gearX, gearY, 2); // center dot
+      
+      // Draw gear teeth (4 small lines extending outward)
+      dc.drawLine(gearX, gearY - gearRadius, gearX, gearY - gearRadius - 3);
+      dc.drawLine(gearX, gearY + gearRadius, gearX, gearY + gearRadius + 3);
+      dc.drawLine(gearX - gearRadius, gearY, gearX - gearRadius - 3, gearY);
+      dc.drawLine(gearX + gearRadius, gearY, gearX + gearRadius + 3, gearY);
+    }
     
     // Show button hint text near START and Back buttons (Increment/Decrement or Menu)
     if (isRec) {
@@ -332,10 +364,27 @@ class NutritionLoggerView extends WatchUi.View {
         }
         line = name + ": " + rpeRange + " (" + rpeDifficulty + ")";
       } else {
-        // Water, Electrolytes, Food counters
+        // Water, Electrolytes, Food counters - show computed intake with units
         var counterIdx = i - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
-        var val = app.mCounters[counterIdx];
-        line = name + ": " + val.format("%.0f");
+        var count = app.mCounters[counterIdx];
+        var intakeValue = 0;
+        var unit = "";
+        
+        if (counterIdx == 0) {
+          // Water: count * mWaterUnit ml
+          intakeValue = count * app.mWaterUnit;
+          unit = "ml";
+        } else if (counterIdx == 1) {
+          // Electrolytes: count * mElectrolytesUnit mg
+          intakeValue = count * app.mElectrolytesUnit;
+          unit = "mg";
+        } else {
+          // Food: count * mFoodUnit kcal
+          intakeValue = count * app.mFoodUnit;
+          unit = "kcal";
+        }
+        
+        line = name + ": " + intakeValue.format("%.0f") + unit;
       }
       
       // Highlight selected item
