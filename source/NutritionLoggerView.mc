@@ -145,9 +145,22 @@ class NutritionLoggerView extends WatchUi.View {
       arcEnd
     );
 
-    // When idle (not recording), show gear icon hint near UP button for settings
+    // When idle (not recording)
+    // show play icon hint near START button for starting a new session
+    // show gear icon hint near UP button for settings
     if (!isRec) {
+      // Draw Play icon near START button (upper right) indicating "Start Session"
       dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+      var playX = mSignUpperRightX - 8;
+      var playY = mSignUpperRightY + 4;
+      // Draw filled triangle pointing right
+      dc.fillPolygon([
+        [playX, playY],
+        [playX, playY + 12],
+        [playX + 10, playY + 6]
+      ]);
+
+      dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
       dc.setPenWidth(2);
       
       // Draw arc near UP button (left side, same position as during recording)
@@ -170,11 +183,20 @@ class NutritionLoggerView extends WatchUi.View {
       dc.drawCircle(gearX, gearY, gearRadius);
       dc.fillCircle(gearX, gearY, 2); // center dot
       
-      // Draw gear teeth (4 small lines extending outward)
+      // Draw gear teeth (8 lines extending outward)
+      // Cardinal directions
       dc.drawLine(gearX, gearY - gearRadius, gearX, gearY - gearRadius - 3);
       dc.drawLine(gearX, gearY + gearRadius, gearX, gearY + gearRadius + 3);
       dc.drawLine(gearX - gearRadius, gearY, gearX - gearRadius - 3, gearY);
       dc.drawLine(gearX + gearRadius, gearY, gearX + gearRadius + 3, gearY);
+      
+      // Diagonals (approx at 45 degrees)
+      // Radius 5 -> ~3.5 offset (use 4)
+      // Outer 8 -> ~5.6 offset (use 6)
+      dc.drawLine(gearX - 4, gearY - 4, gearX - 6, gearY - 6);
+      dc.drawLine(gearX + 4, gearY - 4, gearX + 6, gearY - 6);
+      dc.drawLine(gearX - 4, gearY + 4, gearX - 6, gearY + 6);
+      dc.drawLine(gearX + 4, gearY + 4, gearX + 6, gearY + 6);
     }
     
     // Show button hint text near START and Back buttons (Increment/Decrement or Menu)
