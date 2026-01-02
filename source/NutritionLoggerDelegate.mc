@@ -67,7 +67,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
 
 
 
-  function incrementCounter(app as NutritionLoggerApp) as Boolean {
+  function incrementIntake(app as NutritionLoggerApp) as Boolean {
       var idx = app.mSelectedIndex;
       
       // If MENU_FIELD is selected, ignore increment (menu doesn't have a value)
@@ -80,10 +80,18 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
         app.mRPE = app.mRPE + 1 < 4 ? app.mRPE + 1 : 4;
         app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
       } else {
-        // Increment selected counter (Water, Electrolytes, Food)
-        var counterIdx = idx - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
-        app.mCounters[counterIdx] = app.mCounters[counterIdx] + 1;
-        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+        // Add unit value to intake (Water, Electrolytes, Food)
+        var intakeIdx = idx - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
+        var unitValue = 0;
+        if (intakeIdx == 0) {
+          unitValue = app.mWaterUnit;
+        } else if (intakeIdx == 1) {
+          unitValue = app.mElectrolytesUnit;
+        } else {
+          unitValue = app.mFoodUnit;
+        }
+        app.mIntake[intakeIdx] = app.mIntake[intakeIdx] + unitValue;
+        app.setFieldByIndex(idx, app.mIntake[intakeIdx]);
       }
       
       // Haptic feedback - short pulse
@@ -99,7 +107,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       return true;
   }
 
-  function decrementCounter(app as NutritionLoggerApp) as Boolean {
+  function decrementIntake(app as NutritionLoggerApp) as Boolean {
       var idx = app.mSelectedIndex;
       
       // If MENU_FIELD is selected, ignore decrement (menu doesn't have a value)
@@ -112,13 +120,21 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
         app.mRPE = app.mRPE - 1 <= 0 ? 0 : app.mRPE - 1;
         app.setFieldByIndex(app.RPE_FIELD, app.mRPE);
       } else {
-        // Decrement selected counter
-        var counterIdx = idx - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
-        app.mCounters[counterIdx] = app.mCounters[counterIdx] - 1;
-        if (app.mCounters[counterIdx] < 0) {
-          app.mCounters[counterIdx] = 0;
+        // Subtract unit value from intake
+        var intakeIdx = idx - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
+        var unitValue = 0;
+        if (intakeIdx == 0) {
+          unitValue = app.mWaterUnit;
+        } else if (intakeIdx == 1) {
+          unitValue = app.mElectrolytesUnit;
+        } else {
+          unitValue = app.mFoodUnit;
         }
-        app.setFieldByIndex(idx, app.mCounters[counterIdx]);
+        app.mIntake[intakeIdx] = app.mIntake[intakeIdx] - unitValue;
+        if (app.mIntake[intakeIdx] < 0) {
+          app.mIntake[intakeIdx] = 0;
+        }
+        app.setFieldByIndex(idx, app.mIntake[intakeIdx]);
       }
       
       // Haptic feedback - double pulse for undo/decrement
@@ -163,7 +179,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       }
       
       // Otherwise increment the selected counter
-      incrementCounter(app);
+      incrementIntake(app);
       return true;
     }
 
@@ -192,7 +208,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
         :subSport => Activity.SUB_SPORT_TRAIL,
         :sensorLogger => app.logger,
       });
-      app.resetCounters();
+      app.resetIntake();
       app.mSelectedIndex = app.RPE_FIELD; 
       app.initFitFields();
       app.mSession.setTimerEventListener(method(:onTimerEvent));
@@ -217,7 +233,7 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
       }
       
       // Decrement the selected counter
-      decrementCounter(app);
+      decrementIntake(app);
       return true;
     }
     return false;
@@ -233,9 +249,9 @@ class NutritionLoggerDelegate extends WatchUi.BehaviorDelegate {
     // Keep developer fields updated on each tick so values are written
     var app = getApp();
     if (app.mSession != null && app.mSession.isRecording()) {
-      app.setFieldByIndex(0, app.mCounters[0]);
-      app.setFieldByIndex(1, app.mCounters[1]);
-      app.setFieldByIndex(2, app.mCounters[2]);
+      app.setFieldByIndex(1, app.mIntake[0]);
+      app.setFieldByIndex(2, app.mIntake[1]);
+      app.setFieldByIndex(3, app.mIntake[2]);
     }
     // Refresh UI
     WatchUi.requestUpdate();

@@ -364,23 +364,16 @@ class NutritionLoggerView extends WatchUi.View {
         }
         line = name + ": " + rpeRange + " (" + rpeDifficulty + ")";
       } else {
-        // Water, Electrolytes, Food counters - show computed intake with units
-        var counterIdx = i - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
-        var count = app.mCounters[counterIdx];
-        var intakeValue = 0;
+        // Water, Electrolytes, Food - display stored intake values directly
+        var intakeIdx = i - 1; // Water=1->0, Electrolytes=2->1, Food=3->2
+        var intakeValue = app.mIntake[intakeIdx];
         var unit = "";
         
-        if (counterIdx == 0) {
-          // Water: count * mWaterUnit ml
-          intakeValue = count * app.mWaterUnit;
+        if (intakeIdx == 0) {
           unit = "ml";
-        } else if (counterIdx == 1) {
-          // Electrolytes: count * mElectrolytesUnit mg
-          intakeValue = count * app.mElectrolytesUnit;
+        } else if (intakeIdx == 1) {
           unit = "mg";
         } else {
-          // Food: count * mFoodUnit kcal
-          intakeValue = count * app.mFoodUnit;
           unit = "kcal";
         }
         

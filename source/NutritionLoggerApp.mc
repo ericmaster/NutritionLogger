@@ -42,9 +42,9 @@ class NutritionLoggerApp extends Application.AppBase {
   var mElectrolytesField as Fit.Field?;
   var mFoodField as Fit.Field?;
 
-  // Counters and selection
+  // Intake values stored directly (ml, mg, kcal) - not counters
   var mRPE as Number = 1; // Should start at 1 (RPE 3-4)
-  var mCounters as Array<Number> = [0, 0, 0]; // [water, electrolytes, food]
+  var mIntake as Array<Number> = [0, 0, 0]; // [water ml, electrolytes mg, food kcal]
   var mSelectedIndex as Number = 0; // 0=RPE, 1=Water, 2=Electrolytes, 3=Food, 4=Menu (default to RPE)
 
   var logger as SensorLogging.SensorLogger?;
@@ -91,9 +91,9 @@ class NutritionLoggerApp extends Application.AppBase {
   }
 
   // Helpers
-  function resetCounters() as Void {
+  function resetIntake() as Void {
     mRPE = 1; // Should start at 1 (RPE 3-4)
-    mCounters = [0, 0, 0];
+    mIntake = [0, 0, 0]; // Reset to 0ml, 0mg, 0kcal
     mSelectedIndex = RPE_FIELD; // Start with RPE selected (index 0)
   }
 
@@ -109,23 +109,24 @@ class NutritionLoggerApp extends Application.AppBase {
         Fit.DATA_TYPE_UINT8,
         { :mesgType => Fit.MESG_TYPE_RECORD, :units => "level" }
       );
+      // Use UINT16 for larger intake values (up to 65535)
       mWaterField = mSession.createField(
-        "water_intake_count",
+        "water_intake",
         1,
-        Fit.DATA_TYPE_UINT8,
-        { :mesgType => Fit.MESG_TYPE_RECORD, :units => "count" }
+        Fit.DATA_TYPE_UINT16,
+        { :mesgType => Fit.MESG_TYPE_RECORD, :units => "ml" }
       );
       mElectrolytesField = mSession.createField(
-        "electrolytes_intake_count",
+        "electrolytes_intake",
         2,
-        Fit.DATA_TYPE_FLOAT,
-        { :mesgType => Fit.MESG_TYPE_RECORD, :units => "count" }
+        Fit.DATA_TYPE_UINT16,
+        { :mesgType => Fit.MESG_TYPE_RECORD, :units => "mg" }
       );
       mFoodField = mSession.createField(
-        "food_intake_count",
+        "food_intake",
         3,
-        Fit.DATA_TYPE_FLOAT,
-        { :mesgType => Fit.MESG_TYPE_RECORD, :units => "count" }
+        Fit.DATA_TYPE_UINT16,
+        { :mesgType => Fit.MESG_TYPE_RECORD, :units => "kcal" }
       );
       // Initialize to zero
       mWaterField.setData(0);
@@ -136,15 +137,19 @@ class NutritionLoggerApp extends Application.AppBase {
     }
   }
 
+  // Set FIT field value - mIntake already contains actual values (ml, mg, kcal)
   function setFieldByIndex(idx as Number, value as Number) as Void {
     if (idx == RPE_FIELD && mRPEField != null) {
       mRPEField.setData(value);
     } else if (idx == WATER_FIELD && mWaterField != null) {
-      mWaterField.setData(value);
+      // mIntake[0] already contains ml
+      mWaterField.setData(mIntake[0]);
     } else if (idx == ELECTROLYTES_FIELD && mElectrolytesField != null) {
-      mElectrolytesField.setData(value);
+      // mIntake[1] already contains mg
+      mElectrolytesField.setData(mIntake[1]);
     } else if (idx == FOOD_FIELD && mFoodField != null) {
-      mFoodField.setData(value);
+      // mIntake[2] already contains kcal
+      mFoodField.setData(mIntake[2]);
     }
   }
 
@@ -170,17 +175,17 @@ class NutritionLoggerApp extends Application.AppBase {
     Storage.setValue(STORAGE_FOOD_UNIT, mFoodUnit);
   }
 
-  // Get computed intake values (count * unit)
+  // Get intake values (already stored in actual units)
   function getWaterIntake() as Number {
-    return mCounters[0] * mWaterUnit;
+    return mIntake[0];
   }
 
   function getElectrolytesIntake() as Number {
-    return mCounters[1] * mElectrolytesUnit;
+    return mIntake[1];
   }
 
   function getFoodIntake() as Number {
-    return mCounters[2] * mFoodUnit;
+    return mIntake[2];
   }
 }
 
