@@ -1,6 +1,6 @@
 # Trail Run Recorder (NutritionLogger)
 
-Records a FIT activity as Running/Trail. Aim to target Garmin Fenix 7 Pro.
+Records a FIT activity as Running/Trail. Aim to target different Garmin devices. Tested particularly on Garmin Fenix 7 Pro.
 
 During Activity it has the ability to record 3 custom counters:
 - Water intake
