@@ -95,7 +95,7 @@ class SettingsView extends WatchUi.View {
             centerX,
             dc.getHeight() - 30,
             Graphics.FONT_XTINY,
-            "MENU = Save & Exit",
+            "MENU (hold) = Save & Exit",
             Graphics.TEXT_JUSTIFY_CENTER
         );
     }

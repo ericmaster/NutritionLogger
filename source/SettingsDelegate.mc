@@ -7,7 +7,6 @@ class SettingsDelegate extends WatchUi.BehaviorDelegate {
     var mSelectedItem as Number = 0; // 0=Water, 1=Electrolytes, 2=Food
     var mBackHoldTimer as Timer.Timer?;
     var mBackHeld as Boolean = false;
-    const HOLD_DURATION_MS = 500; // Hold for 500ms to exit
 
     function initialize() {
         BehaviorDelegate.initialize();

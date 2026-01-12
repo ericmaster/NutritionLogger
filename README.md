@@ -15,9 +15,9 @@ The app will have 3 modes:
 
 - During activity recording a screen will display some of the recorded data using FitContributor
 - Pressing Back opens a menu where the user can:
-    - Resume the activity (Dismiss menu)
     - Save the activity FIT file (and exit)
     - Discard the activity (and exit)
+    - Configure Settings
 
 ## Button mapping
 
@@ -34,14 +34,15 @@ During activity recording:
 ### Session Menu
 
 When you cycle to the **MENU** state (via Up/Down) and press **Start**, a Session Menu opens:
-- **Resume**: Return to activity recording
 - **Save**: Confirm and save the activity, then exit
 - **Discard**: Confirm and discard the activity, then exit
+- **Settings**: Open settings (to change units)
 
 In the menu:
 - **Up / Down**: Navigate menu items
 - **Start**: Select current item
-- **Back**: Return to activity without selecting
+- **Back**: Does nothing (use MENU button to return)
+- **Menu** (Hold): Return to activity recording
 
 
 ## Development Setup

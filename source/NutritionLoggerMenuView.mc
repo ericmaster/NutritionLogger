@@ -87,7 +87,7 @@ class NutritionLoggerMenuView extends WatchUi.View {
             centerX,
             dc.getHeight() - 30,
             Graphics.FONT_XTINY,
-            "MENU = Return",
+            "MENU (hold) = Return",
             Graphics.TEXT_JUSTIFY_CENTER
         );
     }
