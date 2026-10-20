@@ -4,7 +4,7 @@
 > 1. Read this file before making changes
 > 2. Verify current implementation in code
 > 3. **Update BOTH README.md AND instructions.md** when changing code (NON-NEGOTIABLE)
-> 4. Maintain current state only - no change history
+> 4. Keep technical/user docs current-state only; release history belongs in `CHANGELOG.md` per [AGENTS.md](../AGENTS.md)
 > 5. Code + Documentation = Atomic Operation
 
 > **IMPORTANT**: Only create SUMMARY.md when explicitly asked.
